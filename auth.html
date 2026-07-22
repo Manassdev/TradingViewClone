@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TradeBoard — Sign in</title>
+<style>
+  :root {
+    --bg0: #131722;
+    --bg1: #1A1E29;
+    --bg2: #1E222D;
+    --border: #2A2E39;
+    --border-strong: #363A45;
+    --text-primary: #D1D4DC;
+    --text-secondary: #787B86;
+    --text-muted: #5D606B;
+    --bull: #26A69A;
+    --bear: #EF5350;
+    --accent: #2962FF;
+    --accent-hover: #1E53E5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg0);
+    color: var(--text-primary);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .auth-shell {
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .brand span.accent { color: var(--accent); }
+
+  .card {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--bg1);
+    color: var(--text-primary);
+  }
+
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-wrap input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 5px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-wrap input:focus {
+    border-color: var(--accent);
+  }
+  .input-wrap input.error {
+    border-color: var(--bear);
+  }
+  .toggle-visibility {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .error-msg {
+    font-size: 11px;
+    color: var(--bear);
+    margin-top: 4px;
+    min-height: 14px;
+  }
+
+  .row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 18px;
+    font-size: 12px;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+  }
+  .checkbox-row input { accent-color: var(--accent); }
+  .link {
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 12px;
+    padding: 0;
+  }
+  .link:hover { text-decoration: underline; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 11px 0;
+    border-radius: 5px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .submit-btn:hover { background: var(--accent-hover); }
+  .submit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .oauth-row {
+    display: flex;
+    gap: 10px;
+  }
+  .oauth-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 0;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text-primary);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .oauth-btn:hover {
+    border-color: var(--border-strong);
+    background: #23283580;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 20px;
+  }
+
+  .strength-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .strength-bar div {
+    height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    background: var(--bg2);
+    border: 1px solid var(--bull);
+    color: var(--text-primary);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="brand"><span class="accent">Trade</span>Board</div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login" onclick="setMode('login')">Sign in</button>
+      <button class="tab-btn" id="tab-signup" onclick="setMode('signup')">Create account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <h1>Welcome back</h1>
+      <p class="subtitle">Sign in to access your watchlists and positions.</p>
+
+      <div class="field">
+        <label for="login-email">Email</label>
+        <div class="input-wrap">
+          <input type="email" id="login-email" placeholder="name@company.com" autocomplete="email" required />
+        </div>
+        <div class="error-msg" id="login-email-error"></div>
+      </div>
+
+      <div class="field">
+        <label for="login-password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" required />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('login-password', this)">Show</button>
+        </div>
+        <div class="error-msg" id="login-password-error"></div>
+      </div>
+
+      <div class="row-between">
+        <label class="checkbox-row">
+          <input type="checkbox" id="login-remember" />
+          Remember me
+        </label>
+        <button type="button" class="link" onclick="showToast('Password reset link sent (placeholder)')">Forgot password?</button>
+      </div>
+
+      <button type="submit" class="submit-btn" id="login-submit">Sign in</button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signup-form" onsubmit="handleSignup(event)" style="display:none;">
+      <h1>Create your account</h1>
+      <p class="subtitle">Start tracking markets in a few seconds.</p>
+
+      <div class="field">
+        <label for="signup-name">Full name</label>
+        <div class="input-wrap">
+          <input type="text" id="signup-name" placeholder="Jordan Diaz" autocomplete="name" required />
+        </div>
+        <div class="error-msg" id="signup-name-error"></div>
+      </div>
+
+      <div class="field">
+        <label for="signup-email">Email</label>
+        <div class="input-wrap">
+          <input type="email" id="signup-email" placeholder="name@company.com" autocomplete="email" required />
+        </div>
+        <div class="error-msg" id="signup-email-error"></div>
+      </div>
+
+      <div class="field">
+        <label for="signup-password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="signup-password" placeholder="Create a password" autocomplete="new-password" required oninput="updateStrength()" />
+          <button type="button" class="toggle-visibility" onclick="toggleVisibility('signup-password', this)">Show</button>
+        </div>
+        <div class="strength-bar" id="strength-bar">
+          <div></div><div></div><div></div><div></div>
+        </div>
+        <div class="error-msg" id="signup-password-error"></div>
+      </div>
+
+      <div class="field">
+        <label for="signup-confirm">Confirm password</label>
+        <div class="input-wrap">
+          <input type="password" id="signup-confirm" placeholder="Re-enter your password" autocomplete="new-password" required />
+        </div>
+        <div class="error-msg" id="signup-confirm-error"></div>
+      </div>
+
+      <div class="row-between" style="margin-bottom: 18px;">
+        <label class="checkbox-row">
+          <input type="checkbox" id="signup-terms" required />
+          I agree to the <a href="#" class="link" style="display:inline;">Terms</a> and <a href="#" class="link" style="display:inline;">Privacy Policy</a>
+        </label>
+      </div>
+
+      <button type="submit" class="submit-btn" id="signup-submit">Create account</button>
+    </form>
+
+    <div class="divider">or continue with</div>
+    <div class="oauth-row">
+      <button class="oauth-btn" onclick="showToast('Google OAuth (placeholder)')">Google</button>
+      <button class="oauth-btn" onclick="showToast('GitHub OAuth (placeholder)')">GitHub</button>
+    </div>
+  </div>
+
+  <p class="footer-note" id="footer-note">
+    Don't have an account? <button class="link" onclick="setMode('signup')">Sign up</button>
+  </p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---------------------------------------------------------------
+  // This file is deliberately written as plain state + DOM updates
+  // so each piece maps 1:1 onto React later:
+  //   mode            -> useState('login' | 'signup')
+  //   field values    -> useState per field (or one form-state object)
+  //   errors object   -> useState({ field: message })
+  //   handleLogin/    -> onSubmit handlers, same validation logic
+  //   handleSignup
+  //   updateStrength  -> derived value from password state
+  // No network calls here — teammate wiring up JWT/auth just needs
+  // to replace the "TODO: call auth API" comments below.
+  // ---------------------------------------------------------------
+
+  let mode = "login";
+
+  function setMode(next) {
+    mode = next;
+    document.getElementById("tab-login").classList.toggle("active", mode === "login");
+    document.getElementById("tab-signup").classList.toggle("active", mode === "signup");
+    document.getElementById("login-form").style.display = mode === "login" ? "block" : "none";
+    document.getElementById("signup-form").style.display = mode === "signup" ? "block" : "none";
+
+    const footer = document.getElementById("footer-note");
+    footer.innerHTML =
+      mode === "login"
+        ? `Don't have an account? <button class="link" onclick="setMode('signup')">Sign up</button>`
+        : `Already have an account? <button class="link" onclick="setMode('login')">Sign in</button>`;
+  }
+
+  function toggleVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isPassword = input.type === "password";
+    input.type = isPassword ? "text" : "password";
+    btn.textContent = isPassword ? "Hide" : "Show";
+  }
+
+  function setError(fieldId, message) {
+    const input = document.getElementById(fieldId);
+    const errorEl = document.getElementById(fieldId + "-error");
+    if (input) input.classList.toggle("error", !!message);
+    if (errorEl) errorEl.textContent = message || "";
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+
+    let valid = true;
+    if (!isValidEmail(email)) {
+      setError("login-email", "Enter a valid email address.");
+      valid = false;
+    } else {
+      setError("login-email", "");
+    }
+    if (password.length < 1) {
+      setError("login-password", "Enter your password.");
+      valid = false;
+    } else {
+      setError("login-password", "");
+    }
+    if (!valid) return;
+
+    const btn = document.getElementById("login-submit");
+    btn.disabled = true;
+    btn.textContent = "Signing in…";
+
+    // TODO: call auth API here, e.g.
+    // const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+    // on success: store JWT, redirect to dashboard
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = "Sign in";
+      showToast("Signed in (placeholder — no backend wired up)");
+    }, 700);
+  }
+
+  function updateStrength() {
+    const password = document.getElementById("signup-password").value;
+    const bars = document.querySelectorAll("#strength-bar div");
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    const colors = ["#EF5350", "#EF5350", "#FAC775", "#26A69A"];
+    bars.forEach((bar, i) => {
+      bar.style.background = i < score ? colors[Math.min(score - 1, 3)] : "#2A2E39";
+    });
+  }
+
+  function handleSignup(event) {
+    event.preventDefault();
+    const name = document.getElementById("signup-name").value.trim();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value;
+    const confirm = document.getElementById("signup-confirm").value;
+    const terms = document.getElementById("signup-terms").checked;
+
+    let valid = true;
+
+    if (name.length < 2) {
+      setError("signup-name", "Enter your full name.");
+      valid = false;
+    } else {
+      setError("signup-name", "");
+    }
+
+    if (!isValidEmail(email)) {
+      setError("signup-email", "Enter a valid email address.");
+      valid = false;
+    } else {
+      setError("signup-email", "");
+    }
+
+    if (password.length < 8) {
+      setError("signup-password", "Password must be at least 8 characters.");
+      valid = false;
+    } else {
+      setError("signup-password", "");
+    }
+
+    if (confirm !== password) {
+      setError("signup-confirm", "Passwords do not match.");
+      valid = false;
+    } else {
+      setError("signup-confirm", "");
+    }
+
+    if (!terms) {
+      showToast("Please accept the Terms to continue.");
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    const btn = document.getElementById("signup-submit");
+    btn.disabled = true;
+    btn.textContent = "Creating account…";
+
+    // TODO: call auth API here, e.g.
+    // const res = await fetch('/api/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) })
+    // on success: store JWT, redirect to dashboard / onboarding
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = "Create account";
+      showToast("Account created (placeholder — no backend wired up)");
+    }, 700);
+  }
+
+  let toastTimer;
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+</script>
+
+</body>
+</html>
