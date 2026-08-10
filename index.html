@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradingView Clone - Look first / Then leap.</title>
+  <!-- Google Fonts: Outfit and Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Vanilla CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- CDN Links for Libraries -->
+  <!-- TradingView Lightweight Charts Standalone -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti for alert celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- App Wrapper Container -->
+  <div class="app-container">
+    
+    <!-- HEADER: Branding, Ticker tape marquee, Auth status -->
+    <header class="app-header">
+      <div class="header-left">
+        <!-- Logo replicating the exact TradingView wavy-diagonal-dot logo -->
+        <a href="#/home" class="brand">
+          <svg class="brand-logo-svg" viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+            <line x1="17" y1="21" x2="22" y2="7" />
+            <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+          </svg>
+          <span class="brand-name">TradingView</span>
+        </a>
+
+        <!-- Hamburger toggle for mobile screen sizes -->
+        <button class="mobile-menu-toggle" onclick="App.toggleMobileMenu()" aria-label="Toggle Navigation">
+          <i data-lucide="menu"></i>
+        </button>
+
+        <!-- Search Ctrl+K field mockup -->
+        <div class="header-search-ctrlk" onclick="App.focusSearchInput()">
+          <i data-lucide="search" size="14"></i>
+          <span>Search (Ctrl+K)</span>
+        </div>
+
+        <!-- Main Navigation Links -->
+        <nav class="header-menu">
+          <!-- 1. Products Dropdown -->
+          <div class="menu-dropdown-wrapper">
+            <a href="#/home" class="menu-link">Products</a>
+            <div class="dropdown-menu-card products-dropdown">
+              <div class="drop-header-super" onclick="window.location.href='#/chart'">
+                <div class="super-logo-box"><i data-lucide="shield" style="width: 14px; height: 14px; color:#fff; fill:#fff;"></i></div>
+                <div class="super-text-box">
+                  <span class="super-title">Supercharts</span>
+                  <span class="super-desc">The one terminal to rule them all</span>
+                </div>
+              </div>
+              <span class="dropdown-section-title">Individual Tools</span>
+              <div class="drop-list-item trigger-screeners">
+                <div class="drop-item-left"><i data-lucide="scan"></i><span>Screeners</span></div>
+                <i data-lucide="chevron-right" class="arrow-right"></i>
+                
+                <!-- Screeners Submenu -->
+                <div class="products-submenu-panel">
+                  <span class="dropdown-section-title" style="padding: 4px 12px 6px 12px !important;">Screeners</span>
+                  <a href="#/home" class="drop-simple-link">Stocks</a>
+                  <a href="#/home" class="drop-simple-link">ETFs</a>
+                  <a href="#/home" class="drop-simple-link">Bonds</a>
+                  <a href="#/home" class="drop-simple-link">Crypto coins</a>
+                  <a href="#/home" class="drop-simple-link">CEX pairs</a>
+                  <a href="#/home" class="drop-simple-link">DEX pairs</a>
+                  <a href="#/home" class="drop-simple-link">Pine <span class="beta-badge">BETA</span></a>
+                  
+                  <span class="dropdown-section-title" style="padding: 12px 12px 6px 12px !important;">Heatmaps</span>
+                  <a href="#/home" class="drop-simple-link">Stocks</a>
+                  <a href="#/home" class="drop-simple-link">ETFs</a>
+                  <a href="#/home" class="drop-simple-link">Crypto coins</a>
+                </div>
+              </div>
+              <div class="drop-list-item trigger-calendars">
+                <div class="drop-item-left"><i data-lucide="calendar"></i><span>Calendars</span></div>
+                <i data-lucide="chevron-right" class="arrow-right"></i>
+                
+                <!-- Calendars Submenu -->
+                <div class="products-submenu-panel">
+                  <a href="#/home" class="drop-simple-link" style="margin-top: 4px !important;">Economic</a>
+                  <a href="#/home" class="drop-simple-link">Earnings</a>
+                  <a href="#/home" class="drop-simple-link">Dividends</a>
+                  <a href="#/home" class="drop-simple-link">IPOs</a>
+                </div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="newspaper"></i><span>News Flow</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="briefcase"></i><span>Portfolios</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="bar-chart-2"></i><span>Fundamental Graphs</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 19c6-1 8-15 18-15" />
+                  </svg>
+                  <span>Yield Curves</span>
+                </div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="flag"></i><span>Options</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="globe"></i><span>Macro Maps</span></div>
+              </div>
+              <span class="dropdown-section-title">About</span>
+              <a href="#/home" class="drop-simple-link">Pricing</a>
+              <a href="#/home" class="drop-simple-link">Features</a>
+              <a href="#/home" class="drop-simple-link">What's new</a>
+              <a href="#/home" class="drop-simple-link">Market data</a>
+            </div>
+          </div>
+
+          <!-- 2. Community Dropdown -->
+          <div class="menu-dropdown-wrapper">
+            <a href="#/home" class="menu-link">Community</a>
+            <div class="dropdown-menu-card community-dropdown">
+              <span class="dropdown-section-title">Trading Contests</span>
+              <div class="drop-list-item two-line">
+                <div class="drop-item-left">
+                  <i data-lucide="trophy"></i>
+                  <div class="drop-item-text">
+                    <span class="title">The Leap</span>
+                    <span class="desc">Compete for real money prizes in a risk-free competition</span>
+                  </div>
+                </div>
+              </div>
+              <div class="drop-list-item two-line">
+                <div class="drop-item-left">
+                  <i data-lucide="users"></i>
+                  <div class="drop-item-text">
+                    <span class="title">Community contests</span>
+                    <span class="desc">Join public competitions from traders worldwide or host your own</span>
+                  </div>
+                </div>
+              </div>
+              <span class="dropdown-section-title">Created By Traders</span>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="lightbulb"></i><span>Trading ideas</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="layers"></i><span>Indicators and strategies</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="shopping-bag"></i><span>Paid Spaces</span></div>
+              </div>
+              <span class="dropdown-section-title">About</span>
+              <a href="#/home" class="drop-simple-link">Power of community</a>
+            </div>
+          </div>
+
+          <!-- 3. Markets Dropdown -->
+          <div class="menu-dropdown-wrapper">
+            <a href="#" class="menu-link">Markets</a>
+            
+            <!-- Absolute Markets dropdown widget -->
+             <div class="dropdown-menu-card markets-dropdown-menu">
+              <!-- Market Categories Column -->
+              <div class="markets-col-right">
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><i data-lucide="globe"></i><span>Entire world</span></div>
+                </div>
+                
+                <div class="drop-list-item trigger-countries" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><i data-lucide="flag"></i><span>Countries</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><i data-lucide="newspaper"></i><span>News</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                
+                <span class="dropdown-section-title">Assets</span>
+                
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Indices</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Stocks</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/markets/crypto'">
+                  <div class="drop-item-left"><span>Crypto</span></div>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Futures</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Forex</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Government bonds</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Corporate bonds</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>ETFs</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+                <div class="drop-list-item" onclick="window.location.href='#/home'">
+                  <div class="drop-item-left"><span>Economy</span></div>
+                  <i data-lucide="chevron-right" class="arrow-right"></i>
+                </div>
+              </div>
+             </div>
+          </div>
+
+          <!-- 4. Brokers Dropdown -->
+          <div class="menu-dropdown-wrapper">
+            <a href="#/home" class="menu-link">Brokers</a>
+            <div class="dropdown-menu-card brokers-dropdown">
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="star"></i><span>Top brokers</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="users"></i><span>Compare brokers</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="user-plus"></i><span>Open an account</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="award"></i><span>Awarded brokers</span></div>
+              </div>
+              
+              <span class="dropdown-section-title">Top Platinum Brokers</span>
+              <div class="platinum-broker-box">
+                <div class="broker-header">
+                  <div class="broker-logo-mini">IB</div>
+                  <span class="broker-name">Interactive Brokers</span>
+                </div>
+                <div class="broker-rating">
+                  <strong>4.2</strong>
+                  <span class="stars">★★★★☆</span>
+                </div>
+              </div>
+
+              <span class="dropdown-section-title">About</span>
+              <a href="#/home" class="drop-simple-link">Trading space</a>
+            </div>
+          </div>
+
+          <!-- 5. More Dropdown -->
+          <div class="menu-dropdown-wrapper">
+            <a href="#/home" class="menu-link">More</a>
+            <div class="dropdown-menu-card more-dropdown">
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="help-circle"></i><span>Help Center</span></div>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="download"></i><span>Downloads</span></div>
+                <i data-lucide="chevron-right" class="arrow-right"></i>
+              </div>
+              <div class="drop-list-item">
+                <div class="drop-item-left"><i data-lucide="briefcase"></i><span>For business</span></div>
+                <i data-lucide="chevron-right" class="arrow-right"></i>
+              </div>
+              
+              <span class="dropdown-section-title">Company</span>
+              <a href="#/home" class="drop-simple-link">About</a>
+              <a href="#/home" class="drop-simple-link">#TradingView</a>
+              <a href="#/home" class="drop-simple-link">Space mission</a>
+              <a href="#/home" class="drop-simple-link">Careers</a>
+              <a href="#/home" class="drop-simple-link">Blog and news</a>
+              <a href="#/home" class="drop-simple-link">Media kit</a>
+              <a href="#/home" class="drop-simple-link">Accessibility statement</a>
+              <div class="drop-list-item" style="padding: 6px 12px;">
+                <span style="font-size: 13px; font-weight: 500;">Merch</span>
+                <i data-lucide="chevron-right" class="arrow-right"></i>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <!-- User Auth & CTA Area -->
+      <div class="header-right">
+        <!-- Globe region select with dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <div class="header-region">
+            <i data-lucide="globe" size="16"></i>
+            <span>IN</span>
+          </div>
+          <div class="dropdown-menu-card language-dropdown">
+            <div class="lang-item active">English (India)</div>
+            <div class="lang-item">English</div>
+            <div class="lang-item">Deutsch</div>
+            <div class="lang-item">Français</div>
+            <div class="lang-item">Español</div>
+            <div class="lang-item">Italiano</div>
+            <div class="lang-item">Polski</div>
+            <div class="lang-item">Türkçe</div>
+            <div class="lang-item">Русский</div>
+            <div class="lang-item">Português</div>
+            <div class="lang-item">Bahasa Indonesia</div>
+            <div class="lang-item">Bahasa Melayu</div>
+            <div class="lang-item">ภาษาไทย</div>
+            <div class="lang-item">Tiếng Việt</div>
+            <div class="lang-item">日本語</div>
+            <div class="lang-item">한국어</div>
+            <div class="lang-item">简体中文</div>
+          </div>
+        </div>
+
+        <div id="auth-section-guest" class="header-guest-strip">
+          <button class="auth-icon-btn" onclick="App.openAuthModal()" title="Sign In">
+            <svg class="auth-user-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </button>
+          <button class="header-chart-cta" onclick="window.location.hash='#/chart'">
+            Get started
+          </button>
+        </div>
+        
+        <div id="auth-section-user" class="user-profile" style="display: none;">
+          <div class="user-avatar-small" id="header-user-avatar">
+            <i data-lucide="user" class="text-green"></i>
+          </div>
+          <span class="username" id="header-username">Demo User</span>
+          <button class="logout-button" onclick="App.handleLogout()" title="Sign Out">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- VIEW 1: LANDING HOMEPAGE (Visible by default) -->
+    <div id="view-home" class="view-panel">
+      
+      <!-- HERO BANNER SECTION (Earth horizon background) -->
+      <section class="hero-section">
+        <h1 class="hero-title">Look first / Then leap.</h1>
+        <p class="hero-subtitle">The best trades require research, then commitment.</p>
+        
+        <div class="hero-cta-group">
+          <a href="#/chart" class="hero-cta-btn">Get started for free</a>
+          <span class="hero-cta-tagline">$0 forever, no credit card needed</span>
+        </div>
+
+
+        <!-- Bottom scroll down chevron indicator -->
+        <div class="hero-scroll-indicator">
+          <i data-lucide="chevron-down"></i>
+        </div>
+      </section>
+
+      <!-- SECTION 2 — WHERE THE WORLD DOES MARKETS SHOWCASE -->
+      <section id="section-two">
+        <h2>Where the world does markets</h2>
+        <p>Join 100 million traders and investors taking the future into their own hands.</p>
+        
+        <div class="section-two-preview-wrapper">
+          <div class="section-two-glow-border">
+            <video class="section-two-preview-video" autoplay muted loop playsinline poster="assets/images/platform-preview.jpg">
+              <source src="assets/videos/trading-platform-demo.mp4" type="video/mp4">
+              <img src="assets/images/platform-preview.jpg" alt="TradingView Platform Preview" class="section-two-preview-img">
+            </video>
+          </div>
+        </div>
+
+        <div class="section-two-cta-row">
+          <a href="#/chart" class="section-two-explore-btn">Explore features</a>
+        </div>
+      </section>
+
+      <!-- CRYPTO MARKET SUMMARY SECTION -->
+      <section class="crypto-market-summary-section">
+        <div class="crypto-market-summary-container">
+          <h2 class="section-title">Market summary <i data-lucide="chevron-right" style="display:inline-block; vertical-align:middle; width:18px; height:18px; margin-left:4px;"></i></h2>
+          <div class="crypto-summary-layout">
+            <!-- LEFT COLUMN: BTC/USD Large Card -->
+            <div class="summary-card-large">
+              <div class="card-header-large">
+                <div class="coin-badge-row">
+                  <div class="coin-badge-circle">₿</div>
+                  <div class="coin-title-group">
+                    <span class="coin-name-large">Bitcoin</span>
+                    <span class="coin-type-pill">BTC</span>
+                  </div>
+                </div>
+                <div class="coin-price-row">
+                  <span class="coin-price-large" id="btc-price-large">$-</span>
+                  <span class="coin-price-unit">USD</span>
+                  <span class="coin-change-large" id="btc-change-large">0.00%</span>
+                </div>
+              </div>
+              <!-- Canvas for Chart -->
+              <div class="large-chart-container">
+                <canvas id="btc-large-chart"></canvas>
+              </div>
+              <!-- Time labels along bottom -->
+              <div class="chart-time-labels">
+                <span>09:15</span>
+                <span>10:00</span>
+                <span>11:00</span>
+                <span>12:00</span>
+                <span>13:00</span>
+                <span>14:00</span>
+                <span>15:00</span>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Major Cryptos List Card -->
+            <div class="summary-card-list">
+              <h3 class="list-title">Major Cryptos</h3>
+              <div class="crypto-list-wrapper" id="major-cryptos-list">
+                <!-- Dynamically populated via JS -->
+                <div class="crypto-list-item loading">Loading prices...</div>
+              </div>
+              <a href="#/chart" class="see-all-link">See all major cryptos <i data-lucide="chevron-right" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-left:2px;"></i></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EDITORIAL IDEAS / ANALYSES SECTION -->
+      <section class="ideas-section">
+        <div class="ideas-title-header">
+          <h2 class="section-title">Community ideas <i data-lucide="chevron-right" style="display:inline-block; vertical-align:middle; width:18px; height:18px; margin-left:4px;"></i></h2>
+          <div class="ideas-filter-chips">
+            <button class="idea-chip active">Editors' picks</button>
+            <button class="idea-chip">Popular</button>
+          </div>
+        </div>
+        
+        <div class="ideas-grid-wrapper">
+          <div class="ideas-grid">
+            
+            <div class="idea-card" onclick="window.location.href='idea.html?id=mm-channel-breakout'">
+              <div class="idea-chart-mock">
+                <!-- TradingView overlay logo badge -->
+                <div class="idea-badge-logo">
+                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+                    <line x1="17" y1="21" x2="22" y2="7" />
+                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </div>
+                <!-- Circular asset icon and trend indicator -->
+                <div class="idea-badge-asset">
+                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
+                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
+                </div>
+                <canvas id="mock-chart-idea-1" width="310" height="150"></canvas>
+              </div>
+              <h3 class="idea-title">M&M Strong Bullish Expansion with Channel Breakout</h3>
+              <p class="idea-summary">Mahindra & Mahindra: Daily Technical Snapshot - Strong Bullish Expansion 🚀 STWP Technical Analysis 📝 MARKET...</p>
+              <div class="idea-footer">
+                <div class="idea-author-block">
+                  <span class="idea-author">by simpletradewithpatience</span>
+                  <span class="idea-date">21 hours ago</span>
+                </div>
+                <div class="idea-stats">
+                  <span><i data-lucide="message-square"></i> 2</span>
+                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 8</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="idea-card" onclick="window.location.href='idea.html?id=tatatech-stage2'">
+              <div class="idea-chart-mock">
+                <div class="idea-badge-logo">
+                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+                    <line x1="17" y1="21" x2="22" y2="7" />
+                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </div>
+                <div class="idea-badge-asset">
+                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
+                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
+                </div>
+                <canvas id="mock-chart-idea-2" width="310" height="150"></canvas>
+              </div>
+              <h3 class="idea-title">#TATATECH - Stage 2 BO in WTF</h3>
+              <p class="idea-summary">Script: TATATECH ⚡ Key highlights: 💡 Stage 2 BO in WTF ✅ Volume spike during Breakout 📈 RS Line making 52WH 📈 MACD Crossover If you have any doubts about the setup,...</p>
+              <div class="idea-footer">
+                <div class="idea-author-block">
+                  <span class="idea-author">by MMT_MakeMoneyTrading</span>
+                  <span class="idea-date">Aug 9</span>
+                </div>
+                <div class="idea-stats">
+                  <span><i data-lucide="message-square"></i> 3</span>
+                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 8</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="idea-card" onclick="window.location.href='idea.html?id=eternal-golden-cross'">
+              <div class="idea-chart-mock">
+                <div class="idea-badge-logo">
+                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+                    <line x1="17" y1="21" x2="22" y2="7" />
+                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </div>
+                <div class="idea-badge-asset">
+                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
+                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
+                </div>
+                <canvas id="mock-chart-idea-3" width="310" height="150"></canvas>
+              </div>
+              <h3 class="idea-title">ETERNAL - Swing Trade Setup-Golden Cross Over</h3>
+              <p class="idea-summary">ETERNAL: CMP: ₹315 Eternal is showing a constructive weekly Elliott Wave structure, with ₹212-213 as a major structural low. The current move suggests the beginning of a fresh...</p>
+              <div class="idea-footer">
+                <div class="idea-author-block">
+                  <span class="idea-author">by DrPrashantVerma</span>
+                  <span class="idea-date">Aug 8</span>
+                </div>
+                <div class="idea-stats">
+                  <span><i data-lucide="message-square"></i> 5</span>
+                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 50</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <!-- Horizontal scroll slider chevron control -->
+          <div class="ideas-scroll-arrow-right">
+            <i data-lucide="chevron-right"></i>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- FOOTER -->
+      <footer class="app-footer">
+        <div class="footer-columns">
+          <div class="footer-col">
+            <h4>Products</h4>
+            <a href="#/chart">Supercharts</a>
+            <a href="#/chart">Market Screeners</a>
+            <a href="#/chart">Crypto Screener</a>
+          </div>
+          <div class="footer-col">
+            <h4>Community</h4>
+            <a href="#">Trading Ideas</a>
+            <a href="#">Custom Scripts</a>
+            <a href="#">House Rules</a>
+          </div>
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Pricing plans</a>
+            <a href="#">Contact Support</a>
+          </div>
+        </div>
+        <div class="footer-disclaimer">
+          <p>Disclaimer: Financial markets trading contains substantial risk. All paper trading features, balances, and P/L metrics are strictly simulated and do not represent real monetary transactions. Real-time rates feed from public Binance WebSocket API streams.</p>
+          <p>&copy; 2026 TradingView Clone. Built for presentation purposes using Vanilla HTML/CSS/JS.</p>
+        </div>
+      </footer>
+
+    </div>
+
+    <!-- VIEW 2: CRYPTO MARKET OVERVIEW (Matches Screenshot 1 layout) -->
+    <div id="view-markets-crypto" class="view-panel" style="display: none;">
+      <div class="crypto-overview-panel">
+        
+        <!-- Breadcrumbs trail -->
+        <div class="crypto-breadcrumbs">
+          <a href="#/home">Markets</a> / <span class="active">Crypto market</span>
+        </div>
+
+        <div class="crypto-title-row">
+          <span>Crypto market</span>
+          <h1>Overview <i data-lucide="chevron-down"></i></h1>
+        </div>
+
+        <!-- Market summary header with chevrons -->
+        <div class="market-summary-section">
+          <h2>Market summary <i data-lucide="chevron-right"></i></h2>
+          
+          <div class="summary-cards-grid">
+            <div class="summary-row-card" onclick="window.location.hash='#/chart?symbol=BTCUSDT'">
+              <div class="card-title-block">
+                <div class="circle-badge btc">B</div>
+                <span class="name">Bitcoin</span>
+              </div>
+              <div class="card-rates-block">
+                <span class="rate" id="summary-price-BTCUSDT">$-</span>
+                <span class="change" id="summary-change-BTCUSDT">0.00%</span>
+              </div>
+            </div>
+
+            <div class="summary-row-card" onclick="window.location.hash='#/chart?symbol=ETHUSDT'">
+              <div class="card-title-block">
+                <div class="circle-badge eth">E</div>
+                <span class="name">Ethereum</span>
+              </div>
+              <div class="card-rates-block">
+                <span class="rate" id="summary-price-ETHUSDT">$-</span>
+                <span class="change" id="summary-change-ETHUSDT">0.00%</span>
+              </div>
+            </div>
+
+            <div class="summary-row-card" onclick="window.location.hash='#/chart?symbol=BNBUSDT'">
+              <div class="card-title-block">
+                <div class="circle-badge bnb">B</div>
+                <span class="name">BNB</span>
+              </div>
+              <div class="card-rates-block">
+                <span class="rate" id="summary-price-BNBUSDT">$-</span>
+                <span class="change" id="summary-change-BNBUSDT">0.00%</span>
+              </div>
+            </div>
+
+            <div class="summary-row-card" onclick="window.location.hash='#/chart?symbol=XRPUSDT'">
+              <div class="card-title-block">
+                <div class="circle-badge xrp">X</div>
+                <span class="name">XRP</span>
+              </div>
+              <div class="card-rates-block">
+                <span class="rate" id="summary-price-XRPUSDT">$-</span>
+                <span class="change" id="summary-change-XRPUSDT">0.00%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard widgets layout below summary -->
+        <div class="crypto-dashboard-widgets">
+          <!-- Total Market Cap -->
+          <div class="crypto-widget-card total-cap">
+            <span class="title">Crypto total market cap <span class="badge">TOTAL</span></span>
+            <div class="cap-metrics">
+              <div class="metric">
+                <span class="val">2.2T <span class="usd">USD</span></span>
+                <span class="change text-green">+11.68B (+0.53%)</span>
+                <span class="lbl">Value</span>
+              </div>
+              <div class="metric">
+                <span class="val">77.35B <span class="usd">USD</span></span>
+                <span class="change text-red">-22.17%</span>
+                <span class="lbl">Volume</span>
+              </div>
+            </div>
+            <!-- Interactive total cap chart canvas -->
+            <div class="widget-chart-wrapper">
+              <canvas id="canvas-widget-total-cap" width="580" height="240"></canvas>
+            </div>
+          </div>
+
+          <!-- Right column widgets -->
+          <div class="crypto-widget-side-column">
+            <!-- Stablecoin Market Cap -->
+            <div class="crypto-widget-card stable-cap">
+              <span class="title">Stablecoin market cap <span class="badge">STABLE.C</span></span>
+              <div class="stable-metrics">
+                <span class="val">306.11B <span class="usd">USD</span></span>
+                <span class="change text-red">-1.49%</span>
+              </div>
+              <div class="widget-chart-wrapper-small">
+                <canvas id="canvas-widget-stable-cap" width="310" height="80"></canvas>
+              </div>
+              <div class="month-label">1 month</div>
+            </div>
+
+            <!-- Bitcoin Dominance -->
+            <div class="crypto-widget-card btc-dominance">
+              <span class="title">Bitcoin dominance</span>
+              
+              <div class="dominance-legend">
+                <div class="leg-item">
+                  <span><span class="dot btc"></span> Bitcoin</span>
+                  <span class="val">59.38%</span>
+                </div>
+                <div class="leg-item">
+                  <span><span class="dot eth"></span> Ethereum</span>
+                  <span class="val">10.56%</span>
+                </div>
+                <div class="leg-item">
+                  <span><span class="dot others"></span> Others</span>
+                  <span class="val">30.06%</span>
+                </div>
+              </div>
+
+              <!-- Segmented colored bar -->
+              <div class="dominance-bar">
+                <div class="bar-slice btc" style="width: 59.38%;"></div>
+                <div class="bar-slice eth" style="width: 10.56%;"></div>
+                <div class="bar-slice others" style="width: 30.06%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Footer details -->
+      <footer class="app-footer" style="background: #f8f9fd; border-top: 1px solid #e0e3eb;">
+        <div class="footer-disclaimer" style="max-width: 1080px; width:100%; margin:0 auto; color: #787b86;">
+          <p>Disclaimer: Financial markets trading contains substantial risk. All paper trading features, balances, and P/L metrics are strictly simulated. Real-time rates feed from public Binance WebSocket API streams.</p>
+          <p>&copy; 2026 TradingView Clone. Built using Vanilla HTML/CSS/JS.</p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- VIEW 3: CHARTING TERMINAL (Hidden by default) -->
+    <div id="view-chart" class="view-panel" style="display: none;">
+      
+      <!-- MARKET SUMMARY STRIP: Quick card indicators -->
+      <div class="market-summary-grid" id="market-summary-container">
+        <!-- Dynamically filled with top crypto cards (BTC, ETH, SOL, BNB) -->
+      </div>
+
+      <!-- MAIN DASHBOARD WORKSPACE -->
+      <div class="dashboard-workspace">
+        
+        <!-- DRAWINGS TOOLBAR (Left Strip) -->
+        <aside class="chart-drawings-toolbar">
+          <button class="toolbar-btn" data-tool="select" title="Cursor Mode (Select/Pan)">
+            <i data-lucide="mouse-pointer"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="trendline" title="Draw Trend Line">
+            <i data-lucide="activity"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="horizontal" title="Draw Horizontal Line">
+            <i data-lucide="minus"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="vertical" title="Draw Vertical Line">
+            <i data-lucide="separator-vertical"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="rectangle" title="Draw Rectangle">
+            <i data-lucide="square"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="circle" title="Draw Circle">
+            <i data-lucide="circle"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="arrow" title="Draw Arrow">
+            <i data-lucide="arrow-up-right"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="fibonacci" title="Draw Fibonacci Retracement">
+            <i data-lucide="binary"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="brush" title="Brush / Pencil Tool">
+            <i data-lucide="brush"></i>
+          </button>
+          <button class="toolbar-btn" data-tool="text" title="Add Text Label">
+            <i data-lucide="type"></i>
+          </button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn text-red" onclick="ChartEngine.clearDrawings()" title="Clear All Drawings">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </aside>
+
+        <!-- CHART WORKSPACE (Center) -->
+        <main class="main-chart-area">
+          
+          <!-- Chart settings, timeframes, and indicators selection -->
+          <div class="chart-controls">
+            <div class="control-group">
+              <span class="symbol-badge" id="active-symbol-badge">BTCUSDT</span>
+              
+              <!-- Timeframe selectors -->
+              <div class="timeframe-selectors" id="timeframe-buttons-group">
+                <!-- Dynamically rendered active timeframe triggers -->
+              </div>
+            </div>
+
+            <div class="control-group">
+              <!-- Chart type toggle drop-down -->
+              <div class="dropdown-wrapper">
+                <button class="control-select-btn" onclick="App.toggleDropdown('chart-type-dropdown')">
+                  <i data-lucide="candlestick-chart"></i>
+                  <span id="chart-type-label">Candles</span>
+                  <i data-lucide="chevron-down" size="12"></i>
+                </button>
+                <div class="dropdown-menu" id="chart-type-dropdown">
+                  <div onclick="App.changeChartType('candlestick', 'Candles')">Candlestick</div>
+                  <div onclick="App.changeChartType('line', 'Line')">Line Chart</div>
+                  <div onclick="App.changeChartType('area', 'Area')">Area Chart</div>
+                  <div onclick="App.changeChartType('bar', 'Bar')">Bar Chart</div>
+                </div>
+              </div>
+
+              <!-- Technical Indicators toggle drop-down -->
+              <div class="dropdown-wrapper">
+                <button class="control-select-btn" onclick="App.toggleDropdown('indicators-dropdown')">
+                  <i data-lucide="bar-chart-3"></i>
+                  <span>Indicators</span>
+                  <i data-lucide="chevron-down" size="12"></i>
+                </button>
+                <div class="dropdown-menu list-mode" id="indicators-dropdown">
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-ma" onchange="ChartEngine.toggleIndicator('ma')">
+                    <label for="ind-ma">SMA (9)</label>
+                    <button class="ind-config-trigger" onclick="event.stopPropagation(); App.openIndicatorConfig('ma')">
+                      <i data-lucide="settings" size="12"></i>
+                    </button>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-ema" onchange="ChartEngine.toggleIndicator('ema')">
+                    <label for="ind-ema">EMA (26)</label>
+                    <button class="ind-config-trigger" onclick="event.stopPropagation(); App.openIndicatorConfig('ema')">
+                      <i data-lucide="settings" size="12"></i>
+                    </button>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-vwap" onchange="ChartEngine.toggleIndicator('vwap')">
+                    <label for="ind-vwap">VWAP</label>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-bb" onchange="ChartEngine.toggleIndicator('bb')">
+                    <label for="ind-bb">Bollinger Bands</label>
+                    <button class="ind-config-trigger" onclick="event.stopPropagation(); App.openIndicatorConfig('bb')">
+                      <i data-lucide="settings" size="12"></i>
+                    </button>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-volume" checked onchange="ChartEngine.toggleIndicator('volume')">
+                    <label for="ind-volume">Volume Overlay</label>
+                  </div>
+                  <div class="menu-divider"></div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-rsi" onchange="ChartEngine.toggleIndicator('rsi')">
+                    <label for="ind-rsi">RSI Oscillator</label>
+                    <button class="ind-config-trigger" onclick="event.stopPropagation(); App.openIndicatorConfig('rsi')">
+                      <i data-lucide="settings" size="12"></i>
+                    </button>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-macd" onchange="ChartEngine.toggleIndicator('macd')">
+                    <label for="ind-macd">MACD Pane</label>
+                  </div>
+                  <div class="menu-item-checkbox">
+                    <input type="checkbox" id="ind-stoch" onchange="ChartEngine.toggleIndicator('stoch')">
+                    <label for="ind-stoch">Stochastic Oscillator</label>
+                  </div>
+                </div>
+              </div>
+
+              <button class="icon-control-btn" onclick="ChartEngine.toggleFullscreen()" title="Fullscreen mode">
+                <i data-lucide="maximize-2"></i>
+              </button>
+              <button class="icon-control-btn" onclick="ChartEngine.resetChartScale()" title="Reset Chart scale">
+                <i data-lucide="refresh-cw"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- MAIN PLOTTING ENVELOPE -->
+          <div class="chart-visual-wrapper" id="chart-viewport-box">
+            <!-- SVG layer for active canvas drawing shapes -->
+            <svg id="chart-drawing-svg" class="drawing-svg-overlay"></svg>
+            
+            <!-- Container for rendering TradingView chart instance -->
+            <div id="chart-container-root" class="chart-container-div"></div>
+            
+            <!-- Secondary indicator sub-charts stacked below -->
+            <div id="rsi-container-root" class="subchart-container" style="display: none;">
+              <div class="subchart-title">RSI (14)</div>
+            </div>
+            <div id="macd-container-root" class="subchart-container" style="display: none;">
+              <div class="subchart-title">MACD (12, 26, 9)</div>
+            </div>
+            <div id="stoch-container-root" class="subchart-container" style="display: none;">
+              <div class="subchart-title">Stochastic (14, 3, 3)</div>
+            </div>
+
+            <!-- Drawing Overlay alert box -->
+            <div id="drawing-active-toast" class="drawing-active-toast" style="display: none;">
+              <span>Drawing Mode: <strong id="current-drawing-tool">Trend Line</strong>. Click on chart.</span>
+              <button onclick="ChartEngine.cancelDrawingMode()">Cancel</button>
+            </div>
+          </div>
+        </main>
+
+        <!-- SIDE TABS PANEL (Right Sidebar) -->
+        <aside class="sidebar-panel">
+          
+          <!-- Sidebar Navigation tabs -->
+          <div class="sidebar-tabs">
+            <button class="sidebar-tab active" data-tab="watchlist" onclick="App.switchTab('watchlist')">
+              <i data-lucide="star"></i>
+              Watchlist
+            </button>
+            <button class="sidebar-tab" data-tab="trade" onclick="App.switchTab('trade')">
+              <i data-lucide="arrow-left-right"></i>
+              Trade
+            </button>
+            <button class="sidebar-tab" data-tab="portfolio" onclick="App.switchTab('portfolio')">
+              <i data-lucide="briefcase"></i>
+              Portfolio
+            </button>
+            <button class="sidebar-tab" data-tab="alerts" onclick="App.switchTab('alerts')">
+              <i data-lucide="bell"></i>
+              Alerts
+            </button>
+            <button class="sidebar-tab" data-tab="details" onclick="App.switchTab('details')">
+              <i data-lucide="info"></i>
+              Details
+            </button>
+            <button class="sidebar-tab" data-tab="profile" onclick="App.switchTab('profile')">
+              <i data-lucide="settings"></i>
+              Profile
+            </button>
+          </div>
+
+          <!-- TAB CONTENT 1: WATCHLIST -->
+          <div class="tab-content active" id="tab-watchlist">
+            <div class="watchlist-header-bar">
+              <!-- Search bar with suggestions list -->
+              <form class="watchlist-search" onsubmit="App.handleAddToWatchlist(event)">
+                <div style="position: relative; flex: 1;">
+                  <input
+                    type="text"
+                    id="watchlist-search-input"
+                    class="search-input"
+                    placeholder="Add Asset (e.g. BTC, ETH, SOL)"
+                    autocomplete="off"
+                    oninput="App.handleSearchInput(this.value)"
+                  >
+                  <div class="search-suggestions-box" id="search-suggestions-box" style="display: none;">
+                    <!-- Suggestions links dynamically outputted -->
+                  </div>
+                </div>
+                <button type="submit" class="add-symbol-btn">
+                  <i data-lucide="plus"></i>
+                </button>
+              </form>
+
+              <div class="watchlist-filters">
+                <button class="filter-chip active" id="filter-all" onclick="App.setWatchlistFilter('all')">All</button>
+                <button class="filter-chip" id="filter-favorites" onclick="App.setWatchlistFilter('favorites')">
+                  <i data-lucide="star" style="width:12px; height:12px; margin-right:4px;"></i>Starred
+                </button>
+              </div>
+            </div>
+
+            <!-- Watchlist Items list -->
+            <div class="watchlist-items" id="watchlist-items-list">
+              <!-- Populated dynamically via JS -->
+            </div>
+            
+            <!-- Real-time Market News Feed embedded inside watchlist tab footer -->
+            <div class="news-feed-drawer">
+              <div class="news-feed-header">
+                <h3><i data-lucide="newspaper"></i> Market News</h3>
+                <div class="news-search-box">
+                  <input type="text" id="news-search-input" placeholder="Search news..." oninput="App.handleNewsSearch(this.value)">
+                </div>
+              </div>
+              <div class="news-categories">
+                <button class="cat-chip active" onclick="App.filterNews('all')">All</button>
+                <button class="cat-chip" onclick="App.filterNews('crypto')">Crypto</button>
+                <button class="cat-chip" onclick="App.filterNews('macro')">Macro</button>
+              </div>
+              <div class="news-list" id="news-feed-list">
+                <!-- Dynamically populated news items -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: TRADING PANEL -->
+          <div class="tab-content" id="tab-trade">
+            <div class="panel-section">
+              <div class="trading-type-toggle">
+                <button class="trade-side-btn buy active" id="trade-side-buy" onclick="App.setTradeSide('BUY')">BUY</button>
+                <button class="trade-side-btn sell" id="trade-side-sell" onclick="App.setTradeSide('SELL')">SELL</button>
+              </div>
+
+              <div class="trading-wallet-summary">
+                <span class="lbl">Virtual Cash Balance:</span>
+                <span class="val text-green" id="trade-wallet-balance">$100,000.00</span>
+              </div>
+
+              <div class="order-form-body">
+                <div class="form-group-flex">
+                  <label>Order Type</label>
+                  <div class="order-type-chips">
+                    <button class="order-type-chip active" id="order-type-market" onclick="App.setOrderType('MARKET')">Market</button>
+                    <button class="order-type-chip" id="order-type-limit" onclick="App.setOrderType('LIMIT')">Limit</button>
+                  </div>
+                </div>
+
+                <!-- Price Box (Shows market rate or allows input for Limit order) -->
+                <div class="form-group" id="limit-price-group">
+                  <label class="form-label" id="price-input-label">Execution Price (USD)</label>
+                  <div class="input-with-suffix">
+                    <input type="number" id="trade-order-price" value="0.00" step="any" disabled>
+                    <span class="suffix" id="trade-price-suffix">MARKET</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Quantity</label>
+                  <div class="input-with-suffix">
+                    <input type="number" id="trade-order-qty" value="1.0" step="any" oninput="App.calculateOrderCost()">
+                    <span class="suffix" id="trade-qty-symbol">BTC</span>
+                  </div>
+                </div>
+
+                <!-- Estimated Costs summary -->
+                <div class="order-cost-breakdown">
+                  <div class="cost-row">
+                    <span>Price Quote:</span>
+                    <span id="cost-quote-price">$0.00</span>
+                  </div>
+                  <div class="cost-row highlight">
+                    <span>Estimated Total:</span>
+                    <span id="cost-total-amount">$0.00</span>
+                  </div>
+                </div>
+
+                <button class="place-order-submit-btn buy" id="place-order-button" onclick="App.handlePlaceOrder()">
+                  PLACE BUY ORDER
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 3: PORTFOLIO MANAGEMENT -->
+          <div class="tab-content" id="tab-portfolio">
+            <div class="panel-section">
+              <div class="portfolio-val-card">
+                <div class="sub-lbl">Total Net Asset Value</div>
+                <div class="main-val" id="portfolio-nav-value">$100,000.00</div>
+                <div class="return-pill neutral" id="portfolio-total-return">
+                  <i data-lucide="trending-up"></i>
+                  <span>0.00%</span>
+                </div>
+              </div>
+
+              <div class="portfolio-sub-metrics">
+                <div class="metric-box">
+                  <span class="lbl">Cash Balance</span>
+                  <span class="val" id="portfolio-cash-value">$100,000.00</span>
+                </div>
+                <div class="metric-box">
+                  <span class="lbl">Holdings Value</span>
+                  <span class="val" id="portfolio-holdings-value">$0.00</span>
+                </div>
+              </div>
+
+              <!-- Allocation graph -->
+              <div class="portfolio-allocation-section">
+                <h4>Asset Allocation</h4>
+                <div class="allocation-graph-box">
+                  <svg id="portfolio-allocation-svg" viewBox="0 0 100 100"></svg>
+                  <div class="allocation-legend" id="portfolio-allocation-legend">
+                    <!-- Dynamic legend entries -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Holdings details table -->
+              <div class="holdings-section">
+                <h4>Current Holdings</h4>
+                <div class="holdings-list-wrapper" id="portfolio-holdings-list">
+                  <!-- Dynamically populated cards/table -->
+                </div>
+              </div>
+
+              <!-- Transaction ledger ledger -->
+              <div class="holdings-section">
+                <h4>Transaction History</h4>
+                <div class="transaction-history-list" id="portfolio-transactions-list">
+                  <!-- Dynamically populated transaction ledger logs -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 4: PRICE ALERTS -->
+          <div class="tab-content" id="tab-alerts">
+            <div class="panel-section">
+              <h4>Set Price Alert</h4>
+              <div class="alert-form-body">
+                <div class="form-group-row">
+                  <div class="form-group flex-1">
+                    <label class="form-label">Asset</label>
+                    <input type="text" id="alert-form-symbol" value="BTCUSDT" disabled>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label class="form-label">Condition</label>
+                    <select id="alert-form-condition" class="form-input">
+                      <option value="above">Price Crosses Above</option>
+                      <option value="below">Price Drops Below</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Target Price (USD)</label>
+                  <input type="number" id="alert-form-target" class="form-input" placeholder="Enter target rate" step="any">
+                </div>
+
+                <button class="create-alert-btn" onclick="App.handleCreateAlert()">
+                  Create Alert Trigger
+                </button>
+              </div>
+
+              <div class="active-alerts-section">
+                <h4>Active Price Alerts</h4>
+                <div class="active-alerts-list" id="active-alerts-list">
+                  <!-- Dynamic active alerts -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 5: STOCK DETAILS PAGE -->
+          <div class="tab-content" id="tab-details">
+            <div class="panel-section">
+              <div class="stock-details-hero">
+                <h3 id="details-company-name">Bitcoin (USDT)</h3>
+                <p id="details-company-desc">Bitcoin is the world's first decentralized digital currency. Real-time chart information feeds from Binance markets.</p>
+              </div>
+              
+              <div class="details-stats-grid">
+                <div class="stat-card">
+                  <span class="lbl">Asset Symbol</span>
+                  <span class="val" id="detail-symbol">BTCUSDT</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">Current Price</span>
+                  <span class="val highlight" id="detail-price">$-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">Market Capitalization</span>
+                  <span class="val" id="detail-market-cap">$-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">52-Week Range</span>
+                  <span class="val" id="detail-52w-range">$-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">P/E Ratio (PE)</span>
+                  <span class="val" id="detail-pe-ratio">$-</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">Estimated Yield</span>
+                  <span class="val" id="detail-dividend-yield">0.00%</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">Market Sector</span>
+                  <span class="val" id="detail-sector">Technology / Crypto</span>
+                </div>
+                <div class="stat-card">
+                  <span class="lbl">Asset Industry</span>
+                  <span class="val" id="detail-industry">Blockchain Networks</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 6: USER PROFILE & SETTINGS -->
+          <div class="tab-content" id="tab-profile">
+            <div class="panel-section">
+              <div class="profile-avatar-banner">
+                <div class="user-avatar-large" id="profile-avatar-display">
+                  <i data-lucide="user"></i>
+                </div>
+                <h4 id="profile-username-display">Guest User</h4>
+                <p id="profile-email-display">Sign in to save preferences & sync layouts</p>
+              </div>
+
+              <!-- Avatar Pick Grid -->
+              <div class="profile-form-group">
+                <label class="form-label">Choose Avatar</label>
+                <div class="avatar-select-grid">
+                  <div class="avatar-option active" data-avatar="user" onclick="App.changeAvatar('user')">
+                    <i data-lucide="user"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="shield" onclick="App.changeAvatar('shield')">
+                    <i data-lucide="shield"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="zap" onclick="App.changeAvatar('zap')">
+                    <i data-lucide="zap"></i>
+                  </div>
+                  <div class="avatar-option" data-avatar="rocket" onclick="App.changeAvatar('rocket')">
+                    <i data-lucide="rocket"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preferences update -->
+              <div class="profile-form-group">
+                <label class="form-label">Theme Mode</label>
+                <div class="theme-toggle-strip">
+                  <button class="theme-chip active" id="theme-dark-chip" onclick="App.setTheme('dark')">Dark Theme</button>
+                  <button class="theme-chip" id="theme-light-chip" onclick="App.setTheme('light')">Light Theme</button>
+                </div>
+              </div>
+
+              <div class="profile-form-group">
+                <label class="form-label">Default Chart options</label>
+                <div class="form-row-flex">
+                  <select id="pref-timeframe" class="form-input" onchange="App.setPrefTimeframe(this.value)">
+                    <option value="1m">1 Minute</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h" selected>1 Hour</option>
+                    <option value="4h">4 Hours</option>
+                    <option value="1d">1 Day</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Password form (Requires logged in account) -->
+              <div class="profile-form-group" id="profile-password-form" style="display: none;">
+                <label class="form-label">Change Password</label>
+                <input type="password" id="profile-new-password" class="form-input" placeholder="New Password">
+                <button class="update-profile-btn" onclick="App.updatePassword()">Update Password</button>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- AUTHENTICATION DIALOG MODAL -->
+  <div class="modal-overlay" id="auth-modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close" onclick="App.closeAuthModal()">
+        <i data-lucide="x"></i>
+      </button>
+      <h3 class="modal-title" id="auth-modal-title">Sign In</h3>
+      
+      <form class="modal-form" onsubmit="App.handleAuthSubmit(event)">
+        <div class="form-error" id="auth-form-error" style="display: none;">Invalid credentials</div>
+
+        <div class="form-group" id="auth-username-group" style="display: none;">
+          <label class="form-label">Username</label>
+          <input type="text" id="auth-username" class="form-input" placeholder="Choose username" minlength="3">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email or Username</label>
+          <input type="text" id="auth-email" class="form-input" placeholder="Enter your email or username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" required minlength="6">
+        </div>
+
+        <button type="submit" class="form-submit-btn" id="auth-submit-button">Sign In</button>
+      </form>
+
+      <div class="modal-toggle-text">
+        <span id="auth-modal-switch-prompt">Don't have an account?</span>
+        <span class="modal-toggle-link" id="auth-modal-switch-link" onclick="App.toggleAuthMode()">Sign Up</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICATOR CUSTOMIZATION SETTINGS DIALOG -->
+  <div class="modal-overlay" id="indicator-settings-overlay" style="display: none;">
+    <div class="modal-content">
+      <button class="modal-close" onclick="App.closeIndicatorConfig()">
+        <i data-lucide="x"></i>
+      </button>
+      <h3 class="modal-title" id="ind-settings-title">Indicator Settings</h3>
+      
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label" id="ind-settings-param-lbl">Period</label>
+          <input type="number" id="ind-settings-param-val" class="form-input" min="1" max="200" value="9">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Line Color</label>
+          <input type="color" id="ind-settings-color-val" class="form-input" value="#2962FF" style="padding: 2px; height: 38px;">
+        </div>
+
+        <button class="form-submit-btn" onclick="App.saveIndicatorConfig()">Apply Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP IN-APP NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-alerts-container"></div>
+
+  <!-- App Main Scripts -->
+  <script src="js/state.js"></script>
+  <script src="js/chart-engine.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/watchlist.js"></script>
+  <script src="js/trading.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/news.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/market-summary.js"></script>
+</body>
+</html>

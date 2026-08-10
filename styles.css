@@ -1,0 +1,9 @@
+/* TradingView Clone - Main Entry Stylesheet importing modular CSS component sheets */
+
+@import url('css/variables.css');
+@import url('css/header.css');
+@import url('css/home.css');
+@import url('css/overview.css');
+@import url('css/terminal.css');
+@import url('css/sidebar.css');
+@import url('css/components.css');

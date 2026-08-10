@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">TradingView Idea</title>
+  <!-- Google Fonts: Outfit and Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Vanilla CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    /* Styling specifically for the Idea Detail Page to enable scroll */
+    html, body {
+      height: auto !important;
+      min-height: 100% !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+    
+    .app-container {
+      height: auto !important;
+      min-height: 100vh !important;
+      width: 100% !important;
+      overflow: visible !important;
+    }
+
+    body {
+      background-color: #f0f3fa !important;
+      color: #131722 !important;
+    }
+    
+    .idea-detail-wrapper {
+      max-width: 1120px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 16px;
+      box-sizing: border-box;
+    }
+    
+    .idea-back-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    
+    .idea-back-breadcrumb a {
+      color: #2962ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .idea-back-breadcrumb span {
+      color: #848794;
+    }
+    
+    .idea-main-container {
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+    }
+    
+    .idea-detail-header {
+      padding: 24px;
+      border-bottom: 1px solid #f0f3fa;
+    }
+    
+    .idea-meta-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .idea-meta-symbol {
+      color: #131722;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    
+    .direction-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .direction-badge.long {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+    
+    .idea-badge {
+      background: #f0f3fa;
+      color: #5d606b;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    .idea-date {
+      color: #848794;
+      font-weight: 400;
+      margin-left: auto;
+    }
+    
+    .idea-main-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #131722;
+      line-height: 1.25;
+      margin: 0;
+    }
+    
+    .idea-chart-viewport {
+      background: #ffffff;
+      border-bottom: 1px solid #f0f3fa;
+      position: relative;
+      width: 100%;
+      height: 480px;
+    }
+    
+    .idea-chart-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    .idea-chart-stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: #f8f9fd;
+      border-bottom: 1px solid #f0f3fa;
+      font-size: 13px;
+    }
+    
+    .idea-action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn-action {
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #131722;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    
+    .btn-action:hover {
+      background: #f8f9fd;
+      border-color: #c1c4cd;
+    }
+    
+    .btn-action.grab-btn {
+      background: #2962ff;
+      border-color: #2962ff;
+      color: #ffffff;
+    }
+    
+    .btn-action.grab-btn:hover {
+      background: #1e4bd8;
+      border-color: #1e4bd8;
+    }
+    
+    .stats-group {
+      display: flex;
+      gap: 16px;
+      color: #5d606b;
+      font-weight: 500;
+    }
+    
+    .stats-group span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .idea-body-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+    
+    .idea-content-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .author-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0f3fa;
+    }
+    
+    .author-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #627eea;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .author-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .author-username {
+      font-weight: 700;
+      font-size: 15px;
+      color: #131722;
+    }
+    
+    .author-reputation {
+      font-size: 12px;
+      color: #848794;
+    }
+    
+    .btn-follow {
+      background: #f0f3fa;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #131722;
+      cursor: pointer;
+      margin-left: 12px;
+    }
+    
+    .btn-follow:hover {
+      background: #e0e3eb;
+    }
+    
+    .idea-content-text h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #131722;
+      margin: 24px 0 12px 0;
+      border-bottom: 1px solid #f0f3fa;
+      padding-bottom: 6px;
+    }
+    
+    .idea-content-text p {
+      font-size: 14px;
+      color: #2a2e39;
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+    
+    .idea-content-text strong {
+      color: #131722;
+    }
+    
+    .idea-sidebar-right {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .sidebar-widget {
+      background: #f8f9fd;
+      border: 1px solid #e0e3eb;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .profile-widget-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .widget-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #131722;
+      margin: 0 0 16px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .widget-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      text-align: center;
+      margin-top: 16px;
+    }
+    
+    .widget-stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: #131722;
+    }
+    
+    .widget-stat-lbl {
+      font-size: 11px;
+      color: #848794;
+      margin-top: 4px;
+    }
+    
+    .disclaimer-widget {
+      font-size: 11px;
+      color: #848794;
+      line-height: 1.5;
+    }
+    
+    .back-home-btn {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+    }
+    .back-home-btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--border-glow);
+    }
+    
+    /* Responsive breakpoints */
+    @media (max-width: 820px) {
+      .idea-body-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Wrapper Container -->
+  <div class="app-container">
+    
+    <header class="app-header">
+      <div class="header-left">
+        <a href="index.html#/home" class="logo-link">
+          <svg class="logo-svg" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+            <line x1="17" y1="21" x2="22" y2="7" />
+            <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+          </svg>
+          <span class="logo-text">TradingView</span>
+        </a>
+      </div>
+      <div class="header-right">
+        <a href="index.html#/home" class="back-home-btn">Back to Community ideas</a>
+      </div>
+    </header>
+
+    <div class="idea-detail-wrapper">
+      <!-- Breadcrumb navigation -->
+      <div class="idea-back-breadcrumb">
+        <a href="index.html#/home">Home</a>
+        <span>/</span>
+        <a href="index.html#/home">Community ideas</a>
+        <span>/</span>
+        <span id="breadcrumb-title">Idea Detail</span>
+      </div>
+
+      <!-- Main container -->
+      <div class="idea-main-container">
+        
+        <div class="idea-detail-header">
+          <div class="idea-meta-top">
+            <span class="idea-meta-symbol" id="symbol-info">NSE:M_M</span>
+            <span class="direction-badge long" id="direction-info">LONG</span>
+            <span class="idea-badge" id="badge-info">Editor's picks</span>
+            <span class="idea-date" id="date-info">21 hours ago</span>
+          </div>
+          <h1 class="idea-main-title" id="idea-title">M&M Strong Bullish Expansion with Channel Breakout</h1>
+        </div>
+
+        <!-- Chart -->
+        <div class="idea-chart-viewport">
+          <canvas id="idea-chart" class="idea-chart-canvas"></canvas>
+        </div>
+
+        <!-- Stats and Actions -->
+        <div class="idea-chart-stats-bar">
+          <div class="stats-group">
+            <span><i data-lucide="rocket"></i> <span id="stats-likes">8</span></span>
+            <span><i data-lucide="message-square"></i> <span id="stats-comments">2</span></span>
+            <span><i data-lucide="eye"></i> <span id="stats-views">1,240</span></span>
+          </div>
+          <div class="idea-action-buttons">
+            <button class="btn-action grab-btn"><i data-lucide="copy"></i> Grab this chart</button>
+            <button class="btn-action"><i data-lucide="share-2"></i> Share</button>
+          </div>
+        </div>
+
+        <!-- Body split layout -->
+        <div class="idea-body-layout">
+          
+          <!-- Content Left -->
+          <div class="idea-content-left">
+            <div class="author-header">
+              <div class="author-avatar" id="author-avatar-badge">S</div>
+              <div class="author-details">
+                <span class="author-username" id="author-name">simpletradewithpatience</span>
+                <span class="author-reputation">Reputation: <span id="author-reputation-val">12,450</span></span>
+              </div>
+              <button class="btn-follow">Follow</button>
+            </div>
+            
+            <div class="idea-content-text" id="idea-description">
+              <!-- Content populated via JS -->
+            </div>
+          </div>
+
+          <!-- Sidebar Right -->
+          <div class="idea-sidebar-right">
+            <!-- Author Profile Widget -->
+            <div class="sidebar-widget">
+              <div class="profile-widget-header">
+                <div class="author-avatar" id="author-avatar-widget" style="width:36px; height:36px; font-size:14px;">S</div>
+                <span class="author-username" id="author-name-widget" style="font-size:14px;">simpletradewithpatience</span>
+              </div>
+              <div class="widget-stats-grid">
+                <div>
+                  <div class="widget-stat-val" id="profile-reputation">12.4k</div>
+                  <div class="widget-stat-lbl">Reputation</div>
+                </div>
+                <div>
+                  <div class="widget-stat-val" id="profile-followers">840</div>
+                  <div class="widget-stat-lbl">Followers</div>
+                </div>
+                <div>
+                  <div class="widget-stat-val" id="profile-ideas">112</div>
+                  <div class="widget-stat-lbl">Ideas</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="sidebar-widget disclaimer-widget">
+              <h4 class="widget-title" style="margin-bottom:8px; font-size:11px;">Disclaimer</h4>
+              Do not take this analysis as direct financial advice. Trading cryptocurrencies, stocks, and assets carries a high risk. Always perform your own research and manage your risk properly before making any trade decisions.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Lucide Icons init script -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+  <!-- Load detail script -->
+  <script src="js/idea-detail.js"></script>
+</body>
+</html>

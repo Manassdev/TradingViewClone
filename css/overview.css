@@ -1,0 +1,1186 @@
+/* Market Overview Listings and Crypto Overview Dashboards Styling */
+
+.market-overview-section {
+  padding: 60px 24px;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.overview-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.overview-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.overview-tab:hover {
+  color: var(--text-primary);
+}
+
+.overview-tab.active {
+  color: var(--tv-blue);
+  border-bottom-color: var(--tv-blue);
+}
+
+.overview-table-wrapper {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-main);
+}
+
+.overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.overview-table th {
+  padding: 16px 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.overview-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.overview-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.overview-table tbody tr:hover {
+  background: var(--bg-panel-light);
+}
+
+.sparkline-canvas {
+  width: 80px;
+  height: 28px;
+  display: block;
+}
+
+.overview-launch-btn {
+  background: var(--bg-panel-light);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.overview-launch-btn:hover {
+  background: var(--tv-blue);
+  color: #fff;
+  border-color: var(--tv-blue);
+}
+
+/* Ideas section replicating Screenshot 2 */
+.ideas-section {
+  padding: 40px 24px 80px 24px;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom, var(--bg-main) 0%, var(--bg-panel) 100%);
+}
+
+.ideas-title-header,
+.ideas-grid-wrapper {
+  max-width: 1080px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ideas-title-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ideas-filter-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.idea-chip {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+
+.idea-chip:hover {
+  background: var(--bg-panel-light);
+  color: var(--text-primary);
+}
+
+.idea-chip.active {
+  background: var(--bg-panel-light);
+  color: var(--text-primary);
+}
+
+.ideas-grid-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+.idea-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-main);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.25s, border-color 0.2s;
+}
+
+.idea-card:hover {
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.idea-chart-mock {
+  height: 160px;
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Badge tradingview logo */
+.idea-badge-logo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #0055ff;
+  color: #ffffff;
+  padding: 5px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.idea-badge-logo svg {
+  color: #ffffff;
+  width: 14px;
+  height: 14px;
+}
+
+/* Badge asset circular group */
+.idea-badge-asset {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  z-index: 5;
+}
+
+.asset-circle-icon {
+  background: #ffab00;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-main);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.trend-direction-icon {
+  background: #089981;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -6px;
+  border: 1.5px solid var(--bg-main);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.idea-card .idea-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  padding: 16px 16px 0 16px;
+  color: var(--text-primary);
+}
+
+.idea-card .idea-summary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  padding: 8px 16px 16px 16px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.idea-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.06);
+}
+
+.idea-author-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.idea-author {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.idea-date {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.idea-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.idea-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.idea-stat-rocket {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 4px 10px;
+  background: var(--bg-panel-light);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.idea-stats svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ideas-scroll-arrow-right {
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 10;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.ideas-scroll-arrow-right:hover {
+  background: var(--bg-panel-light);
+  transform: translateY(-50%) scale(1.06);
+}
+
+/* Practice promo section banner */
+.practice-cta-section {
+  padding: 60px 20px;
+  background: linear-gradient(135deg, rgba(41, 98, 255, 0.12) 0%, rgba(8, 153, 129, 0.05) 100%);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.cta-banner-content {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cta-banner-content h2 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.cta-banner-content p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.cta-banner-btn {
+  background: var(--tv-blue);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-body);
+}
+
+.cta-banner-btn:hover {
+  background: #1a4cd2;
+}
+
+/* Footer layout */
+.app-footer {
+  background-color: var(--bg-panel);
+  padding: 50px 20px 30px 20px;
+  border-top: none;
+  margin-top: auto;
+}
+
+.footer-columns {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto 30px auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-col h4 {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.footer-col a {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-col a:hover {
+  color: var(--text-primary);
+}
+
+.footer-disclaimer {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+/* VIEW 2: CRYPTO MARKET OVERVIEW (Light theme - matches TradingView) */
+
+/* Force light theme on this panel regardless of global theme */
+#view-markets-crypto {
+  background: #ffffff;
+  color: #131722;
+}
+
+.crypto-overview-panel {
+  padding: 40px 24px 60px 24px;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  text-align: left;
+}
+
+.crypto-breadcrumbs {
+  font-size: 13px;
+  color: #787b86;
+  font-weight: 500;
+}
+
+.crypto-breadcrumbs a {
+  color: #787b86;
+  text-decoration: none;
+}
+
+.crypto-breadcrumbs a:hover {
+  color: var(--tv-blue);
+}
+
+.crypto-breadcrumbs .active {
+  color: #131722;
+}
+
+.crypto-title-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.crypto-title-row span {
+  font-size: 15px;
+  color: #787b86;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.crypto-title-row h1 {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 800;
+  color: #131722;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -1px;
+}
+
+.crypto-title-row h1 svg {
+  width: 28px;
+  height: 28px;
+  color: #131722;
+}
+
+.market-summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.market-summary-section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #131722;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.market-summary-section h2 svg {
+  width: 18px;
+  height: 18px;
+  color: #131722;
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.summary-row-card {
+  background: #ffffff;
+  border: 1px solid #e0e3eb;
+  border-radius: 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.summary-row-card:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.summary-row-card:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.summary-row-card:hover {
+  background: #f8f9fd;
+}
+
+.card-title-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.circle-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.circle-badge.btc { background: #f7931a; }
+.circle-badge.eth { background: #627eea; }
+.circle-badge.bnb { background: #f3ba2f; }
+.circle-badge.xrp { background: #23292f; }
+
+.card-title-block .name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #131722;
+}
+
+.card-rates-block {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.card-rates-block .rate {
+  font-weight: 700;
+  font-size: 14px;
+  font-family: monospace;
+  color: #131722;
+}
+
+.card-rates-block .change {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.crypto-dashboard-widgets {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+}
+
+.crypto-widget-card {
+  background: #ffffff;
+  border: 1px solid #e0e3eb;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: none;
+}
+
+.crypto-widget-card .title {
+  font-size: 14px;
+  color: #131722;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.crypto-widget-card .badge {
+  background: #f0f3fa;
+  border: 1px solid #e0e3eb;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #787b86;
+}
+
+.cap-metrics {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 16px;
+}
+
+.cap-metrics .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cap-metrics .val {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: #131722;
+  letter-spacing: -0.5px;
+}
+
+.cap-metrics .usd {
+  font-size: 13px;
+  color: #787b86;
+  font-weight: 500;
+}
+
+.cap-metrics .change {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cap-metrics .lbl {
+  font-size: 12px;
+  color: #787b86;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.widget-chart-wrapper {
+  height: 240px;
+  width: 100%;
+}
+
+#canvas-widget-total-cap {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.crypto-widget-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Stablecoin Card details */
+.stable-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.stable-metrics .val {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: #131722;
+}
+
+.stable-metrics .usd {
+  font-size: 11px;
+  color: #787b86;
+}
+
+.stable-metrics .change {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.widget-chart-wrapper-small {
+  height: 80px;
+  width: 100%;
+}
+
+#canvas-widget-stable-cap {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.month-label {
+  align-self: flex-end;
+  font-size: 10px;
+  color: #089981;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Dominance bar graph segment */
+.crypto-widget-card.btc-dominance .title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #131722;
+  margin-bottom: 16px;
+}
+
+.dominance-legend {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.leg-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 13px;
+  color: #131722;
+}
+
+.leg-item .val {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 14px;
+  color: #131722;
+  margin-left: 0;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.dot.btc { background: #2962ff; }
+.dot.eth { background: #089981; }
+.dot.others { background: #f23645; }
+
+.dominance-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-slice.btc { background: #2962ff; }
+.bar-slice.eth { background: #089981; }
+.bar-slice.others { background: #f23645; }
+
+/* Crypto Market Summary Section on Homepage */
+.crypto-market-summary-section {
+  padding: 40px 24px 30px 24px !important;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #ffffff !important;
+  color: #131722 !important;
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  margin-top: -32px; /* Pull it slightly up to overlap section-two smoothly */
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.crypto-market-summary-container {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Title overriding section-title color to dark */
+.crypto-market-summary-section .section-title {
+  color: #131722 !important;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Two-column layout with 67.7% / 32.3% proportions */
+.crypto-summary-layout {
+  display: grid;
+  grid-template-columns: 2.1fr 1fr;
+  gap: 24px;
+  margin-top: 0px;
+}
+
+/* Card base - Light Theme with flex column stretch */
+.summary-card-large, .summary-card-list {
+  background: #ffffff !important;
+  border: 1px solid #e0e3eb !important;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Left Card header - Nifty 50 exact replica style */
+.card-header-large {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.coin-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-badge-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1e293b; /* Dark indigo circle badge */
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coin-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coin-name-large {
+  font-size: 18px;
+  font-weight: 700;
+  color: #131722 !important;
+}
+
+.coin-type-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5d606b;
+  background: #f0f3fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.coin-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.coin-price-large {
+  font-size: 32px;
+  font-weight: 750;
+  font-family: monospace;
+  color: #131722 !important;
+}
+
+.coin-price-unit {
+  font-size: 11px;
+  font-weight: 700;
+  color: #848794;
+  text-transform: uppercase;
+}
+
+.coin-change-large {
+  font-size: 16px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.large-chart-container {
+  flex-grow: 1;
+  min-height: 240px;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.large-chart-container canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.chart-time-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #5d606b !important;
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+/* Right Card List styling */
+.list-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #131722 !important;
+  margin-bottom: 20px;
+}
+
+.crypto-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* Custom row dividers like the image */
+.crypto-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid #f0f3fa !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.crypto-list-item:last-of-type {
+  border-bottom: none !important;
+}
+
+.crypto-list-item:hover {
+  background: rgba(240, 243, 250, 0.4) !important;
+}
+
+.crypto-list-item.loading {
+  justify-content: center;
+  color: #5d606b !important;
+  font-size: 13px;
+  background: transparent !important;
+  border: none !important;
+  cursor: default;
+}
+
+.list-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coin-logo-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white !important;
+  font-size: 14px;
+}
+
+.coin-logo-mini.btc { background: #f7931a; }
+.coin-logo-mini.eth { background: #627eea; }
+.coin-logo-mini.bnb { background: #f3ba2f; }
+.coin-logo-mini.sol { background: #14f195; color: #000 !important; }
+.coin-logo-mini.xrp { background: #23292f; }
+.coin-logo-mini.doge { background: #c2a633; }
+
+.coin-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coin-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #131722 !important;
+}
+
+.coin-subtitle-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5d606b;
+  background: #f0f3fa;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.list-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.coin-price {
+  font-weight: 700;
+  font-size: 14px;
+  font-family: monospace;
+  color: #131722 !important;
+}
+
+.coin-change {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* See all link pushed to the bottom */
+.see-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #2962ff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  margin-top: auto;
+  padding-top: 16px;
+  transition: color 0.2s ease;
+}
+
+.see-all-link:hover {
+  color: #1e4bd8;
+}
+
+/* Community Ideas Override section to white background */
+.ideas-section {
+  background: #ffffff !important;
+  color: #131722 !important;
+  padding-top: 30px !important;
+  padding-bottom: 80px !important;
+}
+
+.ideas-section .section-title {
+  color: #131722 !important;
+}
+
+.ideas-section .idea-chip {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5d606b;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ideas-section .idea-chip.active {
+  background: #f0f3fa !important;
+  color: #131722 !important;
+}
+
+.ideas-section .idea-card {
+  background: #ffffff !important;
+  border: 1px solid #e0e3eb !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+.ideas-section .idea-card:hover {
+  border-color: #2962ff !important;
+}
+
+.ideas-section .idea-title {
+  color: #131722 !important;
+}
+
+.ideas-section .idea-summary {
+  color: #5d606b !important;
+}
+
+.ideas-section .idea-footer {
+  border-top: 1px solid #f0f3fa !important;
+  background: #f8f9fd !important;
+}
+
+.ideas-section .idea-author {
+  color: #131722 !important;
+}
+
+.ideas-section .idea-date {
+  color: #848794 !important;
+}
+
+.ideas-section .idea-stats {
+  color: #5d606b !important;
+}
+
+.ideas-section .idea-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f3f6 !important;
+  border: 1px solid #e0e3eb !important;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #131722 !important;
+}
+
+/* Responsive breakpoint */
+@media (max-width: 820px) {
+  .crypto-summary-layout {
+    grid-template-columns: 1fr;
+  }
+}

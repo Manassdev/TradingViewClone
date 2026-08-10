@@ -1,0 +1,88 @@
+/* Custom Variables, Resets & Scrollbars */
+
+:root {
+  --bg-main: #060913;
+  --bg-card: rgba(18, 22, 35, 0.65);
+  --bg-panel: #131722;
+  --bg-panel-light: #1c2030;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(0, 229, 255, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #848e9c;
+  --text-muted: #475266;
+  
+  --tv-green: #089981;
+  --tv-green-glow: rgba(8, 153, 129, 0.25);
+  --tv-red: #f23645;
+  --tv-red-glow: rgba(242, 54, 69, 0.25);
+  --tv-blue: #2962ff;
+  --tv-blue-glow: rgba(41, 98, 255, 0.3);
+  --tv-yellow: #ffb700;
+  --tv-yellow-glow: rgba(255, 183, 0, 0.25);
+
+  --font-display: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+  
+  --shadow-main: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+  --glass-effect: backdrop-filter: blur(12px);
+}
+
+body.light-theme {
+  --bg-main: #f0f3fa;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-panel: #ffffff;
+  --bg-panel-light: #f8f9fc;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-glow: rgba(41, 98, 255, 0.15);
+  --text-primary: #131722;
+  --text-secondary: #475266;
+  --text-muted: #848e9c;
+  --shadow-main: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Basic resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Scrollbars styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Offset other panels so the absolute navbar doesn't cover their content */
+.view-panel:not(#view-home) {
+  padding-top: 64px !important;
+}
