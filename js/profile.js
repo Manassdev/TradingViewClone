@@ -50,21 +50,7 @@ window.changeAvatar = function(avatarName) {
   renderProfile();
   
   // Update header avatar as well
-  const authGuest = document.getElementById('auth-section-guest');
-  const authUser = document.getElementById('auth-section-user');
-  const headerName = document.getElementById('header-username');
-  const headerAvatar = document.getElementById('header-user-avatar');
-
-  if (AppState.user) {
-    if (authGuest) authGuest.style.display = 'none';
-    if (authUser) authUser.style.display = 'flex';
-    if (headerName) headerName.innerText = AppState.user.username;
-    if (headerAvatar) {
-      headerAvatar.innerHTML = `<i data-lucide="${avatarName}" class="text-green"></i>`;
-    }
-  }
-  
-  lucide.createIcons();
+  renderHeader();
   showToast('Avatar profile updated', 'success');
 };
 

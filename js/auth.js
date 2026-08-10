@@ -109,23 +109,5 @@ window.handleLogout = function() {
 };
 
 window.updateHeaderUserDom = function() {
-  const authGuest = document.getElementById('auth-section-guest');
-  const authUser = document.getElementById('auth-section-user');
-  const headerName = document.getElementById('header-username');
-  const headerAvatar = document.getElementById('header-user-avatar');
-
-  if (AppState.user) {
-    if (authGuest) authGuest.style.display = 'none';
-    if (authUser) authUser.style.display = 'flex';
-    if (headerName) headerName.innerText = AppState.user.username;
-    
-    const avatar = AppState.user.avatar || 'user';
-    if (headerAvatar) {
-      headerAvatar.innerHTML = `<i data-lucide="${avatar}" class="text-green"></i>`;
-    }
-  } else {
-    if (authGuest) authGuest.style.display = 'flex';
-    if (authUser) authUser.style.display = 'none';
-  }
-  lucide.createIcons();
+  renderHeader();
 };

@@ -87,8 +87,12 @@ window.loadState = function() {
   const savedAlerts = localStorage.getItem('tv_alerts');
   if (savedAlerts) AppState.alerts = JSON.parse(savedAlerts);
 
-  // Disable auto-login from localStorage on startup to maintain guest view matching screenshot by default
-  AppState.user = null;
+  const savedUser = localStorage.getItem('tv_user');
+  if (savedUser) {
+    AppState.user = JSON.parse(savedUser);
+  } else {
+    AppState.user = null;
+  }
 };
 
 window.saveState = function() {
@@ -98,5 +102,7 @@ window.saveState = function() {
   localStorage.setItem('tv_alerts', JSON.stringify(AppState.alerts));
   if (AppState.user) {
     localStorage.setItem('tv_user', JSON.stringify(AppState.user));
+  } else {
+    localStorage.removeItem('tv_user');
   }
 };

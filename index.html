@@ -322,25 +322,77 @@
           </div>
         </div>
 
-        <div id="auth-section-guest" class="header-guest-strip">
-          <button class="auth-icon-btn" onclick="App.openAuthModal()" title="Sign In">
-            <svg class="auth-user-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </button>
-          <button class="header-chart-cta" onclick="window.location.hash='#/chart'">
-            Get started
-          </button>
-        </div>
-        
-        <div id="auth-section-user" class="user-profile" style="display: none;">
-          <div class="user-avatar-small" id="header-user-avatar">
-            <i data-lucide="user" class="text-green"></i>
+        <div class="header-auth-group">
+          <!-- The profile icon wrapper -->
+          <div class="profile-menu-wrapper">
+            <!-- Icon trigger button -->
+            <button class="profile-trigger-btn" aria-label="Profile Menu">
+              <!-- Guest avatar (silhouette) -->
+              <div class="profile-avatar guest-avatar" id="header-guest-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <!-- User avatar (only shown if logged in) -->
+              <div class="profile-avatar user-avatar" id="header-user-avatar" style="display: none;">
+                <i data-lucide="user"></i>
+              </div>
+            </button>
+            
+            <!-- Account Dropdown Menu -->
+            <div class="profile-dropdown-menu">
+              <!-- Sign in row (visible when guest) -->
+              <a href="signin.html" class="profile-drop-item signin-link" id="dropdown-signin-row">
+                <i data-lucide="user"></i>
+                <span>Sign in</span>
+              </a>
+              <!-- User info row (visible when logged in) -->
+              <div class="profile-user-info" id="dropdown-user-row" style="display: none;">
+                <div class="user-details">
+                  <span class="user-name-display" id="dropdown-username">Demo User</span>
+                  <span class="user-email-display" id="dropdown-email">demo@test.com</span>
+                </div>
+              </div>
+              
+              <div class="profile-drop-divider"></div>
+              
+              <a href="#/help" class="profile-drop-item">
+                <i data-lucide="help-circle"></i>
+                <span>Help Center</span>
+              </a>
+              <a href="#/whatsnew" class="profile-drop-item">
+                <i data-lucide="sparkles"></i>
+                <span>What's new</span>
+              </a>
+              
+              <div class="profile-drop-divider"></div>
+              
+              <div class="profile-drop-item theme-toggle-item">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <i data-lucide="moon"></i>
+                  <span>Dark theme</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="dropdown-theme-toggle" onchange="App.toggleDarkTheme(this)">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <!-- Sign out row (visible when logged in) -->
+              <div id="dropdown-signout-row" style="display: none;">
+                <div class="profile-drop-divider"></div>
+                <div class="profile-drop-item signout-btn" onclick="App.handleLogout()">
+                  <i data-lucide="log-out"></i>
+                  <span>Sign out</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <span class="username" id="header-username">Demo User</span>
-          <button class="logout-button" onclick="App.handleLogout()" title="Sign Out">
-            <i data-lucide="log-out"></i>
+
+          <!-- Get Started CTA Button (only shown if guest) -->
+          <button class="header-chart-cta" id="header-get-started-btn" onclick="window.location.href='signup.html'">
+            Get started
           </button>
         </div>
       </div>
@@ -1238,39 +1290,7 @@
 
   </div>
 
-  <!-- AUTHENTICATION DIALOG MODAL -->
-  <div class="modal-overlay" id="auth-modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <button class="modal-close" onclick="App.closeAuthModal()">
-        <i data-lucide="x"></i>
-      </button>
-      <h3 class="modal-title" id="auth-modal-title">Sign In</h3>
-      
-      <form class="modal-form" onsubmit="App.handleAuthSubmit(event)">
-        <div class="form-error" id="auth-form-error" style="display: none;">Invalid credentials</div>
-
-        <div class="form-group" id="auth-username-group" style="display: none;">
-          <label class="form-label">Username</label>
-          <input type="text" id="auth-username" class="form-input" placeholder="Choose username" minlength="3">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email or Username</label>
-          <input type="text" id="auth-email" class="form-input" placeholder="Enter your email or username" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" required minlength="6">
-        </div>
-
-        <button type="submit" class="form-submit-btn" id="auth-submit-button">Sign In</button>
-      </form>
-
-      <div class="modal-toggle-text">
-        <span id="auth-modal-switch-prompt">Don't have an account?</span>
-        <span class="modal-toggle-link" id="auth-modal-switch-link" onclick="App.toggleAuthMode()">Sign Up</span>
-      </div>
-    </div>
-  </div>
+  <!-- AUTHENTICATION DIALOG MODAL REMOVED (Replaced by dedicated signin/signup pages) -->
 
   <!-- INDICATOR CUSTOMIZATION SETTINGS DIALOG -->
   <div class="modal-overlay" id="indicator-settings-overlay" style="display: none;">

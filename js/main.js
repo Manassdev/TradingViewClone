@@ -67,23 +67,40 @@ window.saveIndicatorConfig = function() {
 };
 
 window.renderHeader = function() {
-  const authGuest = document.getElementById('auth-section-guest');
-  const authUser = document.getElementById('auth-section-user');
-  const headerName = document.getElementById('header-username');
-  const headerAvatar = document.getElementById('header-user-avatar');
+  const guestAvatar = document.getElementById('header-guest-avatar');
+  const userAvatar = document.getElementById('header-user-avatar');
+  const dropdownSigninRow = document.getElementById('dropdown-signin-row');
+  const dropdownUserRow = document.getElementById('dropdown-user-row');
+  const dropdownSignoutRow = document.getElementById('dropdown-signout-row');
+  const dropdownUsername = document.getElementById('dropdown-username');
+  const dropdownEmail = document.getElementById('dropdown-email');
+  const headerGetStartedBtn = document.getElementById('header-get-started-btn');
+  const themeToggle = document.getElementById('dropdown-theme-toggle');
 
-  if (!authGuest) return;
+  if (themeToggle) {
+    themeToggle.checked = (AppState.theme === 'dark');
+  }
 
   if (AppState.user) {
-    authGuest.style.display = 'none';
-    authUser.style.display = 'flex';
-    headerName.innerText = AppState.user.username;
-    
-    const avatar = AppState.user.avatar || 'user';
-    headerAvatar.innerHTML = `<i data-lucide="${avatar}" class="text-green"></i>`;
+    if (guestAvatar) guestAvatar.style.display = 'none';
+    if (userAvatar) {
+      userAvatar.style.display = 'flex';
+      const avatarName = AppState.user.avatar || 'user';
+      userAvatar.innerHTML = `<i data-lucide="${avatarName}"></i>`;
+    }
+    if (dropdownSigninRow) dropdownSigninRow.style.display = 'none';
+    if (dropdownUserRow) dropdownUserRow.style.display = 'flex';
+    if (dropdownSignoutRow) dropdownSignoutRow.style.display = 'block';
+    if (dropdownUsername) dropdownUsername.innerText = AppState.user.username;
+    if (dropdownEmail) dropdownEmail.innerText = AppState.user.email || '';
+    if (headerGetStartedBtn) headerGetStartedBtn.style.display = 'none';
   } else {
-    authGuest.style.display = 'flex';
-    authUser.style.display = 'none';
+    if (guestAvatar) guestAvatar.style.display = 'flex';
+    if (userAvatar) userAvatar.style.display = 'none';
+    if (dropdownSigninRow) dropdownSigninRow.style.display = 'flex';
+    if (dropdownUserRow) dropdownUserRow.style.display = 'none';
+    if (dropdownSignoutRow) dropdownSignoutRow.style.display = 'none';
+    if (headerGetStartedBtn) headerGetStartedBtn.style.display = 'flex';
   }
   lucide.createIcons();
 };
@@ -343,6 +360,11 @@ window.initTickerStream = function() {
   };
 };
 
+window.toggleDarkTheme = function(checkbox) {
+  const theme = checkbox.checked ? 'dark' : 'light';
+  setTheme(theme);
+};
+
 window.renderAll = function() {
   renderHeader();
   renderMarketSummary();
@@ -390,7 +412,8 @@ window.App = {
   changeTimeframe,
   handleHeroSearch,
   handleHeroSearchClick,
-  triggerHeroSearch
+  triggerHeroSearch,
+  toggleDarkTheme
 };
 
 // Also expose as AppModule internally
@@ -415,6 +438,33 @@ window.addEventListener('DOMContentLoaded', () => {
   lucide.createIcons();
   drawIdeaMockupCharts();
   showToast('TradingView terminal loaded successfully', 'success');
+
+  // Scroll observer for transparent header transition using IntersectionObserver
+  const homeView = document.getElementById('view-home');
+  const heroSection = document.querySelector('.hero-section');
+  if (homeView && heroSection) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const header = document.querySelector('.app-header');
+        if (!header) return;
+        
+        if (AppState.activeView === 'home') {
+          if (entry.isIntersecting) {
+            header.classList.remove('scrolled');
+            header.classList.remove('header-on-white');
+          } else {
+            header.classList.add('scrolled');
+            header.classList.add('header-on-white');
+          }
+        }
+      });
+    }, {
+      root: homeView,
+      rootMargin: '-64px 0px 0px 0px',
+      threshold: 0
+    });
+    observer.observe(heroSection);
+  }
 
   window.addEventListener('hashchange', handleRouting);
 });
