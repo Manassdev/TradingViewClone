@@ -271,30 +271,30 @@ window.navigateToChart = function(symbol) {
   window.location.hash = `#/chart?symbol=${symbol}`;
 };
 
-window.handlePriceTick = function(symbol, price) {
+window.handlePriceTick = function(symbol, price, change) {
   const oldPriceObj = AppState.livePrices[symbol] || { change: '0.00' };
-  const change = oldPriceObj.change;
+  const currentChange = change !== undefined ? change : oldPriceObj.change;
   
   let flashClass = '';
   if (price > oldPriceObj.price) flashClass = 'flash-up';
   else if (price < oldPriceObj.price) flashClass = 'flash-down';
 
-  AppState.livePrices[symbol] = { price, change, flash: flashClass };
+  AppState.livePrices[symbol] = { price, change: currentChange, flash: flashClass };
 
   updateWatchlistDom();
   updateHeaderTickerDom();
   updateMarketSummaryDom();
 
   if (AppState.activeView === 'home' && AppState.activeOverviewTab === 'crypto') {
-    updateOverviewCryptoLiveRow(symbol, price, change);
+    updateOverviewCryptoLiveRow(symbol, price, currentChange);
   }
 
   if (AppState.activeView === 'markets-crypto') {
-    updateCryptoOverviewLiveCards(symbol, price, change);
+    updateCryptoOverviewLiveCards(symbol, price, currentChange);
   }
 
   if (symbol === AppState.activeSymbol) {
-    updateActiveSymbolPrice(price, change);
+    updateActiveSymbolPrice(price, currentChange);
   }
 
   checkPriceAlerts(symbol, price);
@@ -310,7 +310,7 @@ window.initTickerStream = function() {
   }
 
   const streamPath = symbolsLower.join('/');
-  const tickerWs = new WebSocket(`wss://stream.binance.com:9443/ws/${streamPath}`);
+  const tickerWs = new WebSocket(`${AppConfig.wsBase}/ws/${streamPath}`);
   const flashTimers = {};
 
   tickerWs.onmessage = (event) => {
@@ -327,7 +327,7 @@ window.initTickerStream = function() {
         else if (price < oldPriceObj.price) flashClass = 'flash-down';
       }
 
-      AppState.livePrices[symbol] = { price, change, flash: flashClass };
+      handlePriceTick(symbol, price, change);
 
       if (flashClass) {
         if (flashTimers[symbol]) clearTimeout(flashTimers[symbol]);
@@ -338,24 +338,6 @@ window.initTickerStream = function() {
           }
         }, 350);
       }
-
-      updateWatchlistDom();
-      updateHeaderTickerDom();
-      updateMarketSummaryDom();
-
-      if (AppState.activeView === 'home' && AppState.activeOverviewTab === 'crypto') {
-        updateOverviewCryptoLiveRow(symbol, price, change);
-      }
-
-      if (AppState.activeView === 'markets-crypto') {
-        updateCryptoOverviewLiveCards(symbol, price, change);
-      }
-
-      if (symbol === AppState.activeSymbol) {
-        updateActiveSymbolPrice(price, change);
-      }
-
-      checkPriceAlerts(symbol, price);
     }
   };
 };
@@ -383,10 +365,6 @@ window.App = {
   toggleMarketsDropdown,
   toggleMobileMenu,
   focusSearchInput,
-  openAuthModal,
-  closeAuthModal,
-  toggleAuthMode,
-  handleAuthSubmit,
   handleLogout,
   setOverviewTab,
   handleAddToWatchlist,
@@ -424,7 +402,6 @@ window.AppModule = {
   handleSuggestionClick,
   handleDeleteAlert,
   showToast,
-  updateDetailsPanel,
   handlePriceTick
 };
 

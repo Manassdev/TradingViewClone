@@ -207,7 +207,7 @@ window.ChartEngine = {
 
     try {
       // Binance API limit 300 klines
-      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=300`);
+      const res = await fetch(`${AppConfig.apiBase}/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=300`);
       if (!res.ok) throw new Error('Failed to fetch historical rates');
       const klines = await res.json();
 
@@ -264,7 +264,7 @@ window.ChartEngine = {
 
   connectWebSocket(symbol, timeframe) {
     const wsSymbol = symbol.toLowerCase();
-    this.ws = new WebSocket(`wss://stream.binance.com:9443/ws/${wsSymbol}@kline_${timeframe}`);
+    this.ws = new WebSocket(`${AppConfig.wsBase}/ws/${wsSymbol}@kline_${timeframe}`);
 
     this.ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);

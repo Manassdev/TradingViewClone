@@ -106,3 +106,8 @@ window.saveState = function() {
     localStorage.removeItem('tv_user');
   }
 };
+
+window.AppConfig = {
+  apiBase: 'https://api.binance.com',
+  wsBase: 'wss://stream.binance.com:9443'
+};

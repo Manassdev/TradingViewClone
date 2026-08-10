@@ -495,9 +495,3 @@ window.renderDetails = function() {
   document.getElementById('detail-dividend-yield').innerText = dividend;
 };
 
-window.updateDetailsPanel = function(symbol, price) {
-  if (symbol !== AppState.activeSymbol) return;
-
-  const priceSpan = document.getElementById('detail-price');
-  if (priceSpan) priceSpan.innerText = `$${price.toLocaleString(undefined, {minimumFractionDigits:2})}`;
-};

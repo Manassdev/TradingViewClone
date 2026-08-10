@@ -12,7 +12,7 @@
   async function fetchMarketData() {
     try {
       // 1. Fetch current prices & changes
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(SYMBOLS)}`);
+      const response = await fetch(`${AppConfig.apiBase}/api/v3/ticker/24hr?symbols=${JSON.stringify(SYMBOLS)}`);
       const data = await response.json();
       
       // Update Right Card List
@@ -35,7 +35,7 @@
       }
 
       // 2. Fetch BTC klines for chart (last 24 hours, 1h interval)
-      const chartResponse = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=24');
+      const chartResponse = await fetch(`${AppConfig.apiBase}/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=24`);
       const chartData = await chartResponse.json();
       
       drawBtcLargeChart(chartData);
