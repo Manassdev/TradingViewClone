@@ -75,35 +75,47 @@ window.loadState = function() {
     document.body.className = savedTheme === 'light' ? 'light-theme' : '';
   }
 
-  const savedWatch = localStorage.getItem('tv_watchlist');
-  if (savedWatch) AppState.watchlist = JSON.parse(savedWatch);
+  // Account records now come from the authenticated API. Existing legacy
+  // localStorage keys are intentionally left untouched and never read.
+  AppState.user = null;
+};
 
-  const savedFavs = localStorage.getItem('tv_favorites');
-  if (savedFavs) AppState.favorites = JSON.parse(savedFavs);
-
-  const savedPort = localStorage.getItem('tv_portfolio');
-  if (savedPort) AppState.portfolio = JSON.parse(savedPort);
-
-  const savedAlerts = localStorage.getItem('tv_alerts');
-  if (savedAlerts) AppState.alerts = JSON.parse(savedAlerts);
-
-  const savedUser = localStorage.getItem('tv_user');
-  if (savedUser) {
-    AppState.user = JSON.parse(savedUser);
-  } else {
+window.loadAccountState = async function() {
+  if (!TradingApi.getToken()) return;
+  try {
+    const [me, watchlist, alerts, portfolio] = await Promise.all([
+      TradingApi.me(), TradingApi.getWatchlist(), TradingApi.getAlerts(), TradingApi.getPortfolio()
+    ]);
+    AppState.user = me.user;
+    AppState.watchlist = watchlist.symbols;
+    AppState.favorites = watchlist.favorites;
+    AppState.alerts = alerts.alerts.map((alert) => ({
+      id: alert._id, symbol: alert.symbol, condition: alert.condition, target: alert.target, active: alert.active
+    }));
+    AppState.portfolio = portfolio.portfolio;
+    AppState.portfolio.transactions = portfolio.transactions;
+  } catch (error) {
+    TradingApi.clearSession();
     AppState.user = null;
+    showToast(error.message || 'Could not load your account data', 'error');
   }
 };
 
-window.saveState = function() {
-  localStorage.setItem('tv_watchlist', JSON.stringify(AppState.watchlist));
-  localStorage.setItem('tv_favorites', JSON.stringify(AppState.favorites));
-  localStorage.setItem('tv_portfolio', JSON.stringify(AppState.portfolio));
-  localStorage.setItem('tv_alerts', JSON.stringify(AppState.alerts));
-  if (AppState.user) {
-    localStorage.setItem('tv_user', JSON.stringify(AppState.user));
-  } else {
-    localStorage.removeItem('tv_user');
+window.saveState = async function(section) {
+  if (!AppState.user || !TradingApi.getToken()) {
+    showToast('Sign in to save account data', 'warning');
+    return false;
+  }
+  try {
+    if (section === 'watchlist') {
+      const saved = await TradingApi.saveWatchlist({ symbols: AppState.watchlist, favorites: AppState.favorites });
+      AppState.watchlist = saved.symbols;
+      AppState.favorites = saved.favorites;
+    }
+    return true;
+  } catch (error) {
+    showToast(error.message || 'Could not save account data', 'error');
+    return false;
   }
 };
 

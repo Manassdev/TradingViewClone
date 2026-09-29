@@ -712,18 +712,6 @@ window.ChartEngine = {
       });
     });
 
-    // Clean up pre-existing default drawings once on first load of this version to open in clean default state
-    if (!localStorage.getItem('tv_drawings_cleaned_v2')) {
-      localStorage.removeItem(`drawings_${AppState.activeSymbol}`);
-      localStorage.removeItem('drawings_BTCUSDT');
-      localStorage.removeItem('drawings_ETHUSDT');
-      localStorage.removeItem('drawings_SOLUSDT');
-      localStorage.removeItem('drawings_BNBUSDT');
-      localStorage.removeItem('drawings_ADAUSDT');
-      localStorage.removeItem('drawings_XRPUSDT');
-      localStorage.setItem('tv_drawings_cleaned_v2', 'true');
-    }
-
     // Restore drawings from local storage
     const saved = localStorage.getItem(`drawings_${AppState.activeSymbol}`);
     if (saved) {

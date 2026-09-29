@@ -119,6 +119,7 @@
     
   </div>
 
+  <script src="js/api.js"></script>
   <script>
     // Initialize icons
     lucide.createIcons();
@@ -133,15 +134,14 @@
       }
     }
 
-    // Google Sign-up Mock
     function handleGoogleSignUp() {
-      const googleUserObj = { username: 'Google User', email: 'google@test.com', avatar: 'user' };
-      localStorage.setItem('tv_user', JSON.stringify(googleUserObj));
-      window.location.href = 'index.html';
+      const errorBox = document.getElementById('signup-error');
+      errorBox.innerText = 'Google sign-up is not configured. Create an account with email.';
+      errorBox.style.display = 'block';
     }
 
     // Email form registration
-    function handleSignUpSubmit(e) {
+    async function handleSignUpSubmit(e) {
       e.preventDefault();
       const usernameInput = document.getElementById('signup-username');
       const emailInput = document.getElementById('signup-email');
@@ -152,7 +152,7 @@
 
       const username = usernameInput.value.trim();
       const email = emailInput.value.trim();
-      const password = passInput.value.trim();
+      const password = passInput.value;
 
       errorBox.style.display = 'none';
 
@@ -162,21 +162,20 @@
         return;
       }
 
-      if (password.length < 6) {
-        errorBox.innerText = 'Password must be 6 characters or longer';
+      if (password.length < 8) {
+        errorBox.innerText = 'Password must be at least 8 characters';
         errorBox.style.display = 'block';
         return;
       }
 
-      // Save as registered local account
-      const registeredUser = { username, email, password, avatar: 'user' };
-      localStorage.setItem('tv_registered_user', JSON.stringify(registeredUser));
-      
-      // Automatically log them in
-      localStorage.setItem('tv_user', JSON.stringify(registeredUser));
-      
-      // Redirect to homepage
-      window.location.href = 'index.html';
+      try {
+        const result = await TradingApi.signup({ username, email, password });
+        TradingApi.setSession(result.token);
+        window.location.href = 'index.html';
+      } catch (error) {
+        errorBox.innerText = error.message || 'Account creation failed';
+        errorBox.style.display = 'block';
+      }
     }
   </script>
 </body>

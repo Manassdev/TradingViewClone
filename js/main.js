@@ -406,8 +406,9 @@ window.AppModule = {
 };
 
 // DOM Bootloader
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   loadState();
+  await loadAccountState();
   initTickerStream();
   handleRouting();
   renderAll();

@@ -46,7 +46,7 @@ window.calculateOrderCost = function() {
   if (totalSpan) totalSpan.innerText = `$${(qty * price).toLocaleString(undefined, {minimumFractionDigits:2})}`;
 };
 
-window.handlePlaceOrder = function() {
+window.handlePlaceOrder = async function() {
   const qtyInput = document.getElementById('trade-order-qty');
   const priceInput = document.getElementById('trade-order-price');
   const qty = parseFloat(qtyInput?.value) || 0;
@@ -57,69 +57,21 @@ window.handlePlaceOrder = function() {
     return;
   }
 
-  const cost = qty * price;
+  if (!AppState.user) return showToast('Sign in to use paper trading', 'warning');
   const symbol = AppState.activeSymbol;
-
-  if (AppState.tradeSide === 'BUY') {
-    if (AppState.portfolio.balance < cost) {
-      showToast('Insufficient virtual cash balance', 'error');
-      return;
-    }
-
-    AppState.portfolio.balance -= cost;
-    
-    let holding = AppState.portfolio.holdings.find(h => h.symbol === symbol);
-    if (holding) {
-      const oldCost = holding.qty * holding.avgPrice;
-      holding.qty += qty;
-      holding.avgPrice = (oldCost + cost) / holding.qty;
-    } else {
-      AppState.portfolio.holdings.push({ symbol, qty, avgPrice: price });
-    }
-
-    AppState.portfolio.transactions.unshift({
-      id: Date.now(),
-      symbol,
-      type: 'BUY',
-      qty,
-      price,
-      total: cost,
-      time: new Date().toLocaleTimeString()
-    });
-
-    saveState();
+  const button = document.getElementById('place-order-button');
+  if (button) button.disabled = true;
+  try {
+    const result = await TradingApi.placeOrder({ symbol, type: AppState.tradeSide, qty, price });
+    AppState.portfolio = result.portfolio;
+    AppState.portfolio.transactions = [result.transaction, ...AppState.portfolio.transactions];
     renderPortfolio();
-    showToast(`Bought ${qty} ${symbol.replace('USDT','')} successfully!`, 'success');
+    showToast(`${AppState.tradeSide === 'BUY' ? 'Bought' : 'Sold'} ${qty} ${symbol.replace('USDT','')} in paper trading`, 'success');
     confetti({ particleCount: 60, spread: 40, origin: { y: 0.8 } });
-    
-  } else {
-    let holding = AppState.portfolio.holdings.find(h => h.symbol === symbol);
-    if (!holding || holding.qty < qty) {
-      showToast('Insufficient holdings to sell', 'error');
-      return;
-    }
-
-    AppState.portfolio.balance += cost;
-    holding.qty -= qty;
-    
-    if (holding.qty <= 0.000001) {
-      AppState.portfolio.holdings = AppState.portfolio.holdings.filter(h => h.symbol !== symbol);
-    }
-
-    AppState.portfolio.transactions.unshift({
-      id: Date.now(),
-      symbol,
-      type: 'SELL',
-      qty,
-      price,
-      total: cost,
-      time: new Date().toLocaleTimeString()
-    });
-
-    saveState();
-    renderPortfolio();
-    showToast(`Sold ${qty} ${symbol.replace('USDT','')} successfully!`, 'success');
-    confetti({ particleCount: 60, spread: 40, colors: ['#f44336', '#ff5722'], origin: { y: 0.8 } });
+  } catch (error) {
+    showToast(error.message || 'Paper order failed', 'error');
+  } finally {
+    if (button) button.disabled = false;
   }
 };
 

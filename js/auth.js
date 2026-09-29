@@ -2,7 +2,14 @@
 
 window.handleLogout = function() {
   AppState.user = null;
-  localStorage.removeItem('tv_user');
+  TradingApi.clearSession();
+  AppState.watchlist = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT'];
+  AppState.favorites = [];
+  AppState.alerts = [];
+  AppState.portfolio = { balance: 100000, holdings: [], transactions: [] };
+  updateWatchlistDom();
+  renderAlerts();
+  renderPortfolio();
   updateHeaderUserDom();
   renderProfile();
   showToast('Logged out', 'success');

@@ -114,6 +114,7 @@
     
   </div>
 
+  <script src="js/api.js"></script>
   <script>
     // Initialize icons
     lucide.createIcons();
@@ -128,15 +129,14 @@
       }
     }
 
-    // Google Sign-in Mock
     function handleGoogleSignIn() {
-      const googleUserObj = { username: 'Google User', email: 'google@test.com', avatar: 'user' };
-      localStorage.setItem('tv_user', JSON.stringify(googleUserObj));
-      window.location.href = 'index.html';
+      const errorBox = document.getElementById('signin-error');
+      errorBox.innerText = 'Google sign-in is not configured. Use email and password.';
+      errorBox.style.display = 'block';
     }
 
     // Email form submit validator
-    function handleSignInSubmit(e) {
+    async function handleSignInSubmit(e) {
       e.preventDefault();
       const emailInput = document.getElementById('signin-email');
       const passInput = document.getElementById('signin-password');
@@ -145,28 +145,16 @@
       if (!emailInput || !passInput || !errorBox) return;
 
       const email = emailInput.value.trim();
-      const password = passInput.value.trim();
+      const password = passInput.value;
 
       errorBox.style.display = 'none';
 
-      // Check credentials
-      if ((email === 'demo' || email === 'demo@test.com') && password === 'demo123') {
-        const demoUserObj = { username: 'Demo User', email: 'demo@test.com', avatar: 'rocket' };
-        localStorage.setItem('tv_user', JSON.stringify(demoUserObj));
+      try {
+        const result = await TradingApi.login({ login: email, password });
+        TradingApi.setSession(result.token);
         window.location.href = 'index.html';
-      } else {
-        // Check if there is a local account created via signup.html
-        const savedAccountStr = localStorage.getItem('tv_registered_user');
-        if (savedAccountStr) {
-          const savedAccount = JSON.parse(savedAccountStr);
-          if ((email === savedAccount.email || email === savedAccount.username) && password === savedAccount.password) {
-            localStorage.setItem('tv_user', JSON.stringify(savedAccount));
-            window.location.href = 'index.html';
-            return;
-          }
-        }
-        
-        errorBox.innerText = 'Invalid credentials. Hint: use username "demo" and password "demo123"';
+      } catch (error) {
+        errorBox.innerText = error.message || 'Sign-in failed';
         errorBox.style.display = 'block';
       }
     }

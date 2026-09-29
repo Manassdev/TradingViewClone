@@ -1276,7 +1276,8 @@
               <!-- Password form (Requires logged in account) -->
               <div class="profile-form-group" id="profile-password-form" style="display: none;">
                 <label class="form-label">Change Password</label>
-                <input type="password" id="profile-new-password" class="form-input" placeholder="New Password">
+                <input type="password" id="profile-current-password" class="form-input" placeholder="Current Password" autocomplete="current-password">
+                <input type="password" id="profile-new-password" class="form-input" placeholder="New Password" autocomplete="new-password">
                 <button class="update-profile-btn" onclick="App.updatePassword()">Update Password</button>
               </div>
             </div>
@@ -1319,6 +1320,7 @@
   <div class="toast-container" id="toast-alerts-container"></div>
 
   <!-- App Main Scripts -->
+  <script src="js/api.js"></script>
   <script src="js/state.js"></script>
   <script src="js/chart-engine.js"></script>
   <script src="js/ui.js"></script>

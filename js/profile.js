@@ -45,13 +45,12 @@ window.changeAvatar = function(avatarName) {
     showToast('Please sign in to select an avatar', 'warning');
     return;
   }
-  AppState.user.avatar = avatarName;
-  saveState();
-  renderProfile();
-  
-  // Update header avatar as well
-  renderHeader();
-  showToast('Avatar profile updated', 'success');
+  TradingApi.updateProfile({ avatar: avatarName }).then(({ user }) => {
+    AppState.user = user;
+    renderProfile();
+    renderHeader();
+    showToast('Avatar profile updated', 'success');
+  }).catch((error) => showToast(error.message, 'error'));
 };
 
 window.setTheme = function(theme) {
@@ -78,15 +77,17 @@ window.setPrefTimeframe = function(tf) {
 };
 
 window.updatePassword = function() {
+  const currentInput = document.getElementById('profile-current-password');
   const input = document.getElementById('profile-new-password');
-  const pwd = input ? input.value : '';
-  if (!pwd || pwd.length < 6) {
-    showToast('Password must be 6 characters or longer', 'error');
+  const currentPassword = currentInput ? currentInput.value : '';
+  const newPassword = input ? input.value : '';
+  if (!currentPassword || newPassword.length < 8) {
+    showToast('Enter your current password and a new password of at least 8 characters', 'error');
     return;
   }
-
-  AppState.user.password = pwd;
-  saveState();
-  if (input) input.value = '';
-  showToast('Password updated successfully', 'success');
+  TradingApi.updatePassword({ currentPassword, newPassword }).then(() => {
+    if (currentInput) currentInput.value = '';
+    if (input) input.value = '';
+    showToast('Password updated successfully', 'success');
+  }).catch((error) => showToast(error.message, 'error'));
 };

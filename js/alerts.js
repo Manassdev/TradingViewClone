@@ -16,7 +16,7 @@ window.renderAlerts = function() {
         <span class="desc">Crosses ${a.condition.toUpperCase()} $${a.target.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
       </div>
       <div class="alert-right">
-        <button class="alert-delete-btn" onclick="window.AppModule.handleDeleteAlert(${a.id})">
+        <button class="alert-delete-btn" onclick="window.AppModule.handleDeleteAlert('${a.id}')">
           <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
         </button>
       </div>
@@ -25,7 +25,7 @@ window.renderAlerts = function() {
   lucide.createIcons();
 };
 
-window.handleCreateAlert = function() {
+window.handleCreateAlert = async function() {
   const targetInput = document.getElementById('alert-form-target');
   const targetVal = parseFloat(targetInput?.value) || 0;
   const cond = document.getElementById('alert-form-condition').value;
@@ -36,25 +36,24 @@ window.handleCreateAlert = function() {
     return;
   }
 
-  AppState.alerts.push({
-    id: Date.now(),
-    symbol,
-    condition: cond,
-    target: targetVal,
-    active: true
-  });
-
-  saveState();
-  renderAlerts();
-  if (targetInput) targetInput.value = '';
-  showToast('Target alert created successfully', 'success');
+  if (!AppState.user) return showToast('Sign in to create alerts', 'warning');
+  try {
+    const { alert } = await TradingApi.createAlert({ symbol, condition: cond, target: targetVal });
+    AppState.alerts.push({ id: alert._id, symbol: alert.symbol, condition: alert.condition, target: alert.target, active: true });
+    renderAlerts();
+    if (targetInput) targetInput.value = '';
+    showToast('Target alert created successfully', 'success');
+  } catch (error) { showToast(error.message, 'error'); }
 };
 
-window.handleDeleteAlert = function(id) {
-  AppState.alerts = AppState.alerts.filter(a => a.id !== id);
-  saveState();
-  renderAlerts();
-  showToast('Alert deactivated', 'success');
+window.handleDeleteAlert = async function(id) {
+  if (!AppState.user) return showToast('Sign in to manage alerts', 'warning');
+  try {
+    await TradingApi.deleteAlert(id);
+    AppState.alerts = AppState.alerts.filter(a => a.id !== id);
+    renderAlerts();
+    showToast('Alert deactivated', 'success');
+  } catch (error) { showToast(error.message, 'error'); }
 };
 
 window.checkPriceAlerts = function(symbol, currentPrice) {
@@ -67,7 +66,7 @@ window.checkPriceAlerts = function(symbol, currentPrice) {
       if (triggered) {
         a.active = false;
         AppState.alerts = AppState.alerts.filter(al => al.id !== a.id);
-        saveState();
+        if (AppState.user) TradingApi.deleteAlert(a.id).catch((error) => console.error('Alert sync failed:', error));
         renderAlerts();
         triggerAlertPopup(a.symbol, a.condition, a.target);
       }

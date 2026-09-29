@@ -90,7 +90,7 @@ window.toggleFavorite = function(symbol) {
   } else {
     AppState.favorites.push(symbol);
   }
-  saveState();
+  saveState('watchlist');
   updateWatchlistDom();
 };
 
@@ -153,14 +153,14 @@ window.addSymbolToWatchlist = function(symbol) {
   }
 
   AppState.watchlist.push(symbol);
-  saveState();
+  saveState('watchlist');
   updateWatchlistDom();
   showToast(`Added ${symbol} to watchlist`, 'success');
 };
 
 window.handleRemoveFromWatchlist = function(symbol) {
   AppState.watchlist = AppState.watchlist.filter(s => s !== symbol);
-  saveState();
+  saveState('watchlist');
   updateWatchlistDom();
   showToast(`Removed ${symbol} from watchlist`, 'success');
 };
