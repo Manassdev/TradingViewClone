@@ -7,11 +7,21 @@ window.handleRouting = function() {
   const header = document.querySelector('.app-header');
   if (marketsMenu) marketsMenu.style.display = 'none';
 
+  const viewHome = document.getElementById('view-home');
+  const viewMarketsCrypto = document.getElementById('view-markets-crypto');
+  const viewChart = document.getElementById('view-chart');
+
+  if (!viewHome || !viewMarketsCrypto || !viewChart) {
+    // Standalone page context (like pricing.html). Skip view toggling.
+    renderProfile();
+    return;
+  }
+
   if (hash.startsWith('#/chart')) {
     AppState.activeView = 'chart';
-    document.getElementById('view-home').style.display = 'none';
-    document.getElementById('view-markets-crypto').style.display = 'none';
-    document.getElementById('view-chart').style.display = 'flex';
+    viewHome.style.display = 'none';
+    viewMarketsCrypto.style.display = 'none';
+    viewChart.style.display = 'flex';
     if (ctaBtn) ctaBtn.style.display = 'none';
 
     // Reset scrolled state for dark chart workspace view

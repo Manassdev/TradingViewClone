@@ -297,12 +297,17 @@ window.handlePriceTick = function(symbol, price, change) {
     updateActiveSymbolPrice(price, currentChange);
   }
 
-  checkPriceAlerts(symbol, price);
 };
 
 window.initTickerStream = function() {
-  const symbolsLower = AppState.watchlist.map(s => `${s.toLowerCase()}@ticker`);
-  if (!AppState.watchlist.includes(AppState.activeSymbol)) {
+  if (window.watchlistTickerWs && window.watchlistTickerWs.readyState < WebSocket.CLOSING) {
+    window.watchlistTickerWs.close();
+  }
+
+  // The live ticker stream is Binance-only; never subscribe NSE symbols to it.
+  const cryptoSymbols = AppState.watchlist.filter(symbol => symbol.endsWith('USDT'));
+  const symbolsLower = cryptoSymbols.map(s => `${s.toLowerCase()}@ticker`);
+  if (AppState.activeSymbol.endsWith('USDT') && !cryptoSymbols.includes(AppState.activeSymbol)) {
     symbolsLower.push(`${AppState.activeSymbol.toLowerCase()}@ticker`);
   }
   if (!symbolsLower.includes('xrpusdt@ticker')) {
@@ -310,7 +315,7 @@ window.initTickerStream = function() {
   }
 
   const streamPath = symbolsLower.join('/');
-  const tickerWs = new WebSocket(`${AppConfig.wsBase}/ws/${streamPath}`);
+  const tickerWs = window.watchlistTickerWs = new WebSocket(`${AppConfig.wsBase}/ws/${streamPath}`);
   const flashTimers = {};
 
   tickerWs.onmessage = (event) => {
@@ -377,6 +382,7 @@ window.App = {
   calculateOrderCost,
   handlePlaceOrder,
   handleCreateAlert,
+  markAllNotificationsRead: window.markAllNotificationsRead,
   changeAvatar,
   setTheme,
   setPrefTimeframe,
@@ -408,6 +414,8 @@ window.AppModule = {
 // DOM Bootloader
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
+  if (window.syncWatchlistFromBackend) window.watchlistSyncPromise = window.syncWatchlistFromBackend();
+  if (window.syncAlertsFromBackend) window.syncAlertsFromBackend();
   initTickerStream();
   handleRouting();
   renderAll();

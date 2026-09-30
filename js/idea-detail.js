@@ -165,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
       drawEternalChart(ctx, canvas.width, canvas.height);
     }
   }
+
+  // The discussion uses the existing stable idea slug as its comment key.
+  if (window.initializeIdeaComments) window.initializeIdeaComments(ideaId);
 });
 
 // 1. M&M Chart drawing logic (Channel Breakout)

@@ -1,4 +1,11 @@
-/* Watchlist elements rendering, filters, updates, and searches */
+/* Watchlist rendering and server/local data flow */
+
+const getWatchlistItem = (symbol) => AppState.watchlistItems.find((item) => item.symbol === symbol);
+const inferAssetType = (symbol) => symbol.endsWith('USDT') ? 'crypto' : 'stock';
+
+const refreshWatchlistStream = () => {
+  if (typeof window.initTickerStream === 'function') window.initTickerStream();
+};
 
 window.renderWatchlist = function() {
   updateWatchlistDom();
@@ -10,46 +17,46 @@ window.updateWatchlistDom = function() {
 
   let items = AppState.watchlist;
   if (AppState.watchlistFilter === 'favorites') {
-    items = items.filter(s => AppState.favorites.includes(s));
+    items = items.filter((symbol) => AppState.favorites.includes(symbol));
   }
 
   let html = '';
-  items.forEach(symbol => {
-    const data = AppState.livePrices[symbol] || { price: 0, change: '0.00', flash: '' };
+  items.forEach((symbol) => {
+    const item = getWatchlistItem(symbol);
+    const assetType = item?.assetType || inferAssetType(symbol);
+    const data = AppState.livePrices[symbol] || { price: null, change: null, flash: '' };
+    const hasPrice = assetType === 'crypto' && Number.isFinite(data.price) && data.price > 0;
     const isUp = parseFloat(data.change) >= 0;
     const changeClass = isUp ? 'text-green' : 'text-red';
-    const cleanName = symbol.replace('USDT', '');
+    const cleanName = assetType === 'crypto' ? symbol.replace('USDT', '') : symbol;
     const isStarred = AppState.favorites.includes(symbol);
     const starredClass = isStarred ? 'starred' : '';
     const activeClass = AppState.activeSymbol === symbol ? 'active' : '';
+    const assetLabel = assetType === 'crypto' ? 'Crypto / USDT' : `Stock / ${item?.exchange || 'NSE'}`;
+    const priceLabel = hasPrice
+      ? `$${data.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+      : '—';
+    const changeLabel = hasPrice ? `${isUp ? '+' : ''}${data.change}%` : '—';
 
     html += `
       <div class="watchlist-item ${activeClass}" onclick="window.AppModule.selectSymbol('${symbol}')">
         <div class="watchlist-item-left">
           <span class="watchlist-item-name">${cleanName}</span>
-          <span class="watchlist-item-desc">Crypto / USDT</span>
+          <span class="watchlist-item-desc">${assetLabel}</span>
         </div>
         <div class="watchlist-item-right">
           <div class="watchlist-item-price-block">
-            <span class="watchlist-item-price ${data.flash}">
-              $${data.price.toLocaleString(undefined, {minimumFractionDigits:2})}
-            </span>
-            <span class="watchlist-item-change ${changeClass}">
-              ${isUp ? '+' : ''}${data.change}%
-            </span>
+            <span class="watchlist-item-price ${data.flash}">${priceLabel}</span>
+            <span class="watchlist-item-change ${changeClass}">${changeLabel}</span>
           </div>
-          <button 
-            class="watchlist-star-btn ${starredClass}" 
+          <button class="watchlist-star-btn ${starredClass}"
             onclick="event.stopPropagation(); window.AppModule.toggleFavorite('${symbol}')"
-            title="Add to Favorites"
-          >
+            title="Add to Favorites">
             <i data-lucide="star" style="width:14px; height:14px;"></i>
           </button>
-          <button 
-            class="watchlist-remove-btn" 
+          <button class="watchlist-remove-btn"
             onclick="event.stopPropagation(); window.AppModule.handleRemoveFromWatchlist('${symbol}')"
-            title="Remove Ticker"
-          >
+            title="Remove Ticker">
             <i data-lucide="x" style="width:14px; height:14px;"></i>
           </button>
         </div>
@@ -67,17 +74,17 @@ window.updateWatchlistDom = function() {
 
 window.selectSymbol = function(symbol) {
   AppState.activeSymbol = symbol;
-  
+
   const badge = document.getElementById('active-symbol-badge');
   if (badge) badge.innerText = symbol;
   const alertSymbol = document.getElementById('alert-form-symbol');
   if (alertSymbol) alertSymbol.value = symbol;
   const tradeSymbol = document.getElementById('trade-qty-symbol');
-  if (tradeSymbol) tradeSymbol.innerText = symbol.replace('USDT','');
-  
+  if (tradeSymbol) tradeSymbol.innerText = symbol.replace('USDT', '');
+
   updateWatchlistDom();
   renderDetails();
-  
+
   if (ChartEngine.loadData) {
     ChartEngine.loadData(symbol, AppState.activeTimeframe);
   }
@@ -85,11 +92,8 @@ window.selectSymbol = function(symbol) {
 
 window.toggleFavorite = function(symbol) {
   const index = AppState.favorites.indexOf(symbol);
-  if (index >= 0) {
-    AppState.favorites.splice(index, 1);
-  } else {
-    AppState.favorites.push(symbol);
-  }
+  if (index >= 0) AppState.favorites.splice(index, 1);
+  else AppState.favorites.push(symbol);
   saveState();
   updateWatchlistDom();
 };
@@ -109,15 +113,15 @@ window.handleSearchInput = function(val) {
   }
 
   const query = val.toUpperCase().trim();
-  const matches = AppState.assetList.filter(a => 
-    a.symbol.includes(query) || a.name.toUpperCase().includes(query)
+  const matches = AppState.assetList.filter((asset) =>
+    asset.symbol.includes(query) || asset.name.toUpperCase().includes(query)
   );
 
   if (matches.length > 0) {
     box.style.display = 'block';
-    box.innerHTML = matches.map(a => `
-      <div onclick="window.AppModule.handleSuggestionClick('${a.symbol}')">
-        <strong>${a.symbol.replace('USDT','')}</strong> - ${a.name}
+    box.innerHTML = matches.map((asset) => `
+      <div onclick="window.AppModule.handleSuggestionClick('${asset.symbol}')">
+        <strong>${asset.symbol.replace('USDT', '')}</strong> - ${asset.name}
       </div>
     `).join('');
   } else {
@@ -129,38 +133,105 @@ window.handleSuggestionClick = function(symbol) {
   const input = document.getElementById('watchlist-search-input');
   if (input) input.value = symbol;
   document.getElementById('search-suggestions-box').style.display = 'none';
-  addSymbolToWatchlist(symbol);
+  addSymbolToWatchlist(symbol, 'crypto');
 };
 
-window.handleAddToWatchlist = function(e) {
-  e.preventDefault();
+window.handleAddToWatchlist = async function(event) {
+  event.preventDefault();
   const input = document.getElementById('watchlist-search-input');
-  const val = input.value.toUpperCase().trim();
-  if (!val) return;
+  const value = input.value.trim();
+  if (!value) return;
 
-  let symbol = val;
-  if (!val.endsWith('USDT')) symbol = `${val}USDT`;
+  const query = value.toUpperCase();
+  const cryptoMatch = AppState.assetList.find((asset) =>
+    asset.symbol === query || asset.symbol.replace('USDT', '') === query || asset.name.toUpperCase() === query
+  );
+  const symbol = cryptoMatch ? cryptoMatch.symbol : query;
+  const assetType = cryptoMatch || query.endsWith('USDT') ? 'crypto' : 'stock';
 
-  addSymbolToWatchlist(symbol);
+  const added = await addSymbolToWatchlist(symbol, assetType);
+  if (!added) return;
   input.value = '';
   document.getElementById('search-suggestions-box').style.display = 'none';
 };
 
-window.addSymbolToWatchlist = function(symbol) {
-  if (AppState.watchlist.includes(symbol)) {
+window.addSymbolToWatchlist = async function(rawSymbol, assetType = inferAssetType(rawSymbol)) {
+  const symbol = String(rawSymbol).trim().toUpperCase();
+  const exchange = assetType === 'crypto' ? 'BINANCE' : 'NSE';
+  const authenticated = window.ApiClient && window.ApiClient.getToken();
+  if (authenticated && window.watchlistSyncPromise) await window.watchlistSyncPromise;
+  const existing = AppState.watchlistItems.find((item) => item.symbol === symbol && item.assetType === assetType);
+  if (existing || AppState.watchlist.includes(symbol)) {
     showToast('Ticker already in watchlist', 'warning');
+    return false;
+  }
+
+  if (authenticated) {
+    const response = await window.ApiClient.watchlist.add({
+      symbol,
+      assetType,
+      exchange,
+      provider: assetType === 'crypto' ? 'binance' : 'manual'
+    });
+    if (!response.ok || !response.data?.data) {
+      showToast(response.data?.message || 'Could not save the watchlist item', 'error');
+      return false;
+    }
+    const item = response.data.data;
+    AppState.watchlistItems.push(item);
+    AppState.watchlist.push(item.symbol);
+  } else {
+    const item = { _id: `local:${assetType}:${symbol}`, symbol, assetType, exchange, provider: assetType === 'crypto' ? 'binance' : 'manual' };
+    AppState.watchlistItems.push(item);
+    AppState.watchlist.push(symbol);
+    saveState();
+  }
+
+  updateWatchlistDom();
+  refreshWatchlistStream();
+  showToast(`Added ${symbol} to watchlist`, 'success');
+  return true;
+};
+
+window.handleRemoveFromWatchlist = async function(symbol) {
+  const item = getWatchlistItem(symbol);
+  const authenticated = window.ApiClient && window.ApiClient.getToken();
+  if (authenticated) {
+    if (!item?._id) {
+      showToast('Watchlist is still loading. Please try again.', 'warning');
+      return false;
+    }
+    const response = await window.ApiClient.watchlist.remove(item._id);
+    if (!response.ok) {
+      showToast(response.data?.message || 'Could not remove the watchlist item', 'error');
+      return false;
+    }
+  }
+
+  AppState.watchlist = AppState.watchlist.filter((entry) => entry !== symbol);
+  AppState.watchlistItems = AppState.watchlistItems.filter((entry) => entry.symbol !== symbol);
+  saveState();
+  updateWatchlistDom();
+  refreshWatchlistStream();
+  showToast(`Removed ${symbol} from watchlist`, 'success');
+  return true;
+};
+
+// Authenticated users always replace any local snapshot with the server result.
+window.syncWatchlistFromBackend = async function() {
+  if (!(window.ApiClient && window.ApiClient.getToken())) return;
+
+  const response = await window.ApiClient.watchlist.get();
+  if (!response.ok || !Array.isArray(response.data?.data?.items)) {
+    AppState.watchlist = [];
+    AppState.watchlistItems = [];
+    updateWatchlistDom();
+    showToast(response.data?.message || 'Could not load your watchlist', 'error');
     return;
   }
 
-  AppState.watchlist.push(symbol);
-  saveState();
+  AppState.watchlistItems = response.data.data.items;
+  AppState.watchlist = AppState.watchlistItems.map((item) => item.symbol);
   updateWatchlistDom();
-  showToast(`Added ${symbol} to watchlist`, 'success');
-};
-
-window.handleRemoveFromWatchlist = function(symbol) {
-  AppState.watchlist = AppState.watchlist.filter(s => s !== symbol);
-  saveState();
-  updateWatchlistDom();
-  showToast(`Removed ${symbol} from watchlist`, 'success');
+  refreshWatchlistStream();
 };

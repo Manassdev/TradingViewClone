@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TradingView Clone - Look first / Then leap.</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <!-- Google Fonts: Outfit and Space Grotesk -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -407,7 +409,7 @@
         <p class="hero-subtitle">The best trades require research, then commitment.</p>
         
         <div class="hero-cta-group">
-          <a href="#/chart" class="hero-cta-btn">Get started for free</a>
+          <a href="pricing.html" class="hero-cta-btn">Get started for free</a>
           <span class="hero-cta-tagline">$0 forever, no credit card needed</span>
         </div>
 
@@ -433,7 +435,7 @@
         </div>
 
         <div class="section-two-cta-row">
-          <a href="#/chart" class="section-two-explore-btn">Explore features</a>
+          <a href="features.html" class="section-two-explore-btn">Explore features</a>
         </div>
       </section>
 
@@ -1173,6 +1175,14 @@
                   <!-- Dynamic active alerts -->
                 </div>
               </div>
+
+              <div class="notifications-section">
+                <div class="notifications-heading">
+                  <h4><i data-lucide="bell" aria-hidden="true"></i> Notifications <span id="notifications-unread-count"></span></h4>
+                  <button type="button" class="notifications-mark-all" onclick="App.markAllNotificationsRead()">Mark all read</button>
+                </div>
+                <div class="notifications-list" id="notifications-list" aria-live="polite"></div>
+              </div>
             </div>
           </div>
 
@@ -1319,6 +1329,7 @@
   <div class="toast-container" id="toast-alerts-container"></div>
 
   <!-- App Main Scripts -->
+  <script src="js/api.js"></script>
   <script src="js/state.js"></script>
   <script src="js/chart-engine.js"></script>
   <script src="js/ui.js"></script>

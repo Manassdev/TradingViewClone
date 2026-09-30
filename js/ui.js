@@ -459,11 +459,14 @@ window.drawIdeaMockupCharts = function() {
 };
 
 window.renderDetails = function() {
+  const detailsTitle = document.getElementById('details-company-name');
+  if (!detailsTitle) return;
+
   const symbol = AppState.activeSymbol;
   const cleanSym = symbol.replace('USDT','');
   const asset = AppState.assetList.find(a => a.symbol === symbol) || { name: cleanSym, desc: 'Cryptocurrency market feed loaded from Binance.' };
 
-  document.getElementById('details-company-name').innerText = `${asset.name} (${cleanSym})`;
+  detailsTitle.innerText = `${asset.name} (${cleanSym})`;
   document.getElementById('details-company-desc').innerText = asset.desc;
   document.getElementById('detail-symbol').innerText = symbol;
 

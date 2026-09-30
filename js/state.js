@@ -9,6 +9,7 @@ window.AppState = {
   activeOverviewTab: 'crypto', // crypto, stocks, indices
   user: null, // Logged in user details
   watchlist: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT'],
+  watchlistItems: [], // Asset metadata and backend IDs; watchlist remains a symbol list for Binance/UI compatibility
   favorites: [],
   watchlistFilter: 'all', // all, favorites
   portfolio: {
@@ -75,8 +76,15 @@ window.loadState = function() {
     document.body.className = savedTheme === 'light' ? 'light-theme' : '';
   }
 
-  const savedWatch = localStorage.getItem('tv_watchlist');
-  if (savedWatch) AppState.watchlist = JSON.parse(savedWatch);
+  const hasServerSession = window.ApiClient && window.ApiClient.getToken();
+  if (hasServerSession) {
+    // An authenticated user's watchlist is loaded from MongoDB after boot.
+    AppState.watchlist = [];
+    AppState.watchlistItems = [];
+  } else {
+    const savedWatch = localStorage.getItem('tv_watchlist');
+    if (savedWatch) AppState.watchlist = JSON.parse(savedWatch);
+  }
 
   const savedFavs = localStorage.getItem('tv_favorites');
   if (savedFavs) AppState.favorites = JSON.parse(savedFavs);
@@ -84,8 +92,8 @@ window.loadState = function() {
   const savedPort = localStorage.getItem('tv_portfolio');
   if (savedPort) AppState.portfolio = JSON.parse(savedPort);
 
-  const savedAlerts = localStorage.getItem('tv_alerts');
-  if (savedAlerts) AppState.alerts = JSON.parse(savedAlerts);
+  // Price alerts are owned by the backend and loaded after authentication.
+  AppState.alerts = [];
 
   const savedUser = localStorage.getItem('tv_user');
   if (savedUser) {
@@ -96,10 +104,11 @@ window.loadState = function() {
 };
 
 window.saveState = function() {
-  localStorage.setItem('tv_watchlist', JSON.stringify(AppState.watchlist));
+  if (!(window.ApiClient && window.ApiClient.getToken())) {
+    localStorage.setItem('tv_watchlist', JSON.stringify(AppState.watchlist));
+  }
   localStorage.setItem('tv_favorites', JSON.stringify(AppState.favorites));
   localStorage.setItem('tv_portfolio', JSON.stringify(AppState.portfolio));
-  localStorage.setItem('tv_alerts', JSON.stringify(AppState.alerts));
   if (AppState.user) {
     localStorage.setItem('tv_user', JSON.stringify(AppState.user));
   } else {

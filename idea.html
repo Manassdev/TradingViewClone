@@ -281,6 +281,130 @@
     .idea-content-text strong {
       color: #131722;
     }
+
+    .community-discussion {
+      border-top: 1px solid #e0e3eb;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .community-discussion-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .community-discussion-heading h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #131722;
+    }
+
+    .community-comment-count {
+      color: #787b86;
+      font-size: 13px;
+    }
+
+    .comment-composer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .comment-input {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+      box-sizing: border-box;
+      border: 1px solid #d1d4dc;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #131722;
+      background: #fff;
+      font: inherit;
+    }
+
+    .comment-post-button {
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 16px;
+      color: #fff;
+      background: #2962ff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .comment-post-button:disabled,
+    .comment-delete-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .comment-login-prompt,
+    .comment-feedback,
+    .comment-empty-state {
+      margin: 0;
+      color: #787b86;
+      font-size: 13px;
+    }
+
+    .comment-feedback.error {
+      color: #d32f2f;
+    }
+
+    .community-comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .community-comment-card {
+      border: 1px solid #e0e3eb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #f8f9fd;
+    }
+
+    .community-comment-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      color: #787b86;
+      font-size: 12px;
+    }
+
+    .community-comment-author {
+      color: #131722;
+      font-weight: 600;
+    }
+
+    .community-comment-content {
+      color: #2a2e39;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .comment-delete-button {
+      border: 0;
+      padding: 2px 0;
+      color: #787b86;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .comment-delete-button:hover {
+      color: #d32f2f;
+    }
     
     .idea-sidebar-right {
       display: flex;
@@ -439,6 +563,22 @@
             <div class="idea-content-text" id="idea-description">
               <!-- Content populated via JS -->
             </div>
+
+            <section class="community-discussion" id="community-discussion" aria-labelledby="community-discussion-title">
+              <div class="community-discussion-heading">
+                <h3 id="community-discussion-title">Community Discussion</h3>
+                <span class="community-comment-count" id="community-comment-count">0</span>
+              </div>
+              <form class="comment-composer" id="comment-form">
+                <textarea class="comment-input" id="comment-input" maxlength="2000" placeholder="Write a comment..." required></textarea>
+                <button class="comment-post-button" id="comment-post-button" type="submit">Post</button>
+              </form>
+              <p class="comment-login-prompt" id="comment-login-prompt" hidden>
+                <a href="signin.html">Sign in</a> to post a comment.
+              </p>
+              <p class="comment-feedback" id="comment-feedback" role="status" aria-live="polite"></p>
+              <div class="community-comments-list" id="community-comments-list" aria-live="polite"></div>
+            </section>
           </div>
 
           <!-- Sidebar Right -->
@@ -485,7 +625,9 @@
       lucide.createIcons();
     });
   </script>
-  <!-- Load detail script -->
+  <!-- Load API & detail script -->
+  <script src="js/api.js"></script>
+  <script src="js/comments.js"></script>
   <script src="js/idea-detail.js"></script>
 </body>
 </html>

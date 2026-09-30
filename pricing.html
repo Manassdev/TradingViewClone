@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradingView Subscriptions - Look first / Then leap.</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/pricing.css">
+  <!-- CDN Links for Libraries -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="pricing-page-body">
+
+  <!-- Header Navigation -->
+  <header class="app-header">
+    <div class="header-left">
+      <!-- Logo -->
+      <a href="index.html" class="brand">
+        <svg class="brand-logo-svg" viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
+          <line x1="17" y1="21" x2="22" y2="7" />
+          <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+        <span class="brand-name">TradingView</span>
+      </a>
+
+      <!-- Hamburger toggle for mobile screen sizes -->
+      <button class="mobile-menu-toggle" onclick="window.location.href='index.html'" aria-label="Home">
+        <i data-lucide="menu"></i>
+      </button>
+
+      <!-- Search Ctrl+K field mockup -->
+      <div class="header-search-ctrlk" onclick="window.location.href='index.html'">
+        <i data-lucide="search" size="14"></i>
+        <span>Search (Ctrl+K)</span>
+      </div>
+
+      <!-- Main Navigation Links -->
+      <nav class="header-menu">
+        <!-- 1. Products Dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <a href="index.html" class="menu-link">Products</a>
+        </div>
+
+        <!-- 2. Community Dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <a href="index.html" class="menu-link">Community</a>
+        </div>
+
+        <!-- 3. Markets Dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <a href="index.html" class="menu-link">Markets</a>
+        </div>
+
+        <!-- 4. Brokers Dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <a href="index.html" class="menu-link">Brokers</a>
+        </div>
+
+        <!-- 5. More Dropdown -->
+        <div class="menu-dropdown-wrapper">
+          <a href="index.html" class="menu-link">More</a>
+        </div>
+      </nav>
+    </div>
+
+    <!-- User Auth & CTA Area -->
+    <div class="header-right">
+      <!-- Globe region select with dropdown -->
+      <div class="menu-dropdown-wrapper">
+        <div class="header-region">
+          <i data-lucide="globe" size="16"></i>
+          <span>IN</span>
+        </div>
+        <div class="dropdown-menu-card language-dropdown">
+          <div class="lang-item active">English (India)</div>
+          <div class="lang-item">English</div>
+          <div class="lang-item">Deutsch</div>
+        </div>
+      </div>
+
+      <div class="header-auth-group">
+        <!-- The profile icon wrapper -->
+        <div class="profile-menu-wrapper">
+          <button class="profile-trigger-btn" aria-label="Profile Menu">
+            <!-- Guest avatar (silhouette) -->
+            <div class="profile-avatar guest-avatar" id="header-guest-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <!-- User avatar (only shown if logged in) -->
+            <div class="profile-avatar user-avatar" id="header-user-avatar" style="display: none;">
+              <i data-lucide="user"></i>
+            </div>
+          </button>
+          
+          <!-- Account Dropdown Menu -->
+          <div class="profile-dropdown-menu">
+            <a href="signin.html" class="profile-drop-item signin-link" id="dropdown-signin-row">
+              <i data-lucide="user"></i>
+              <span>Sign in</span>
+            </a>
+            <div class="profile-user-info" id="dropdown-user-row" style="display: none;">
+              <div class="user-details">
+                <span class="user-name-display" id="dropdown-username">Demo User</span>
+                <span class="user-email-display" id="dropdown-email">demo@test.com</span>
+              </div>
+            </div>
+            
+            <div class="profile-drop-divider"></div>
+            
+            <a href="index.html" class="profile-drop-item">
+              <i data-lucide="help-circle"></i>
+              <span>Help Center</span>
+            </a>
+            <a href="index.html" class="profile-drop-item">
+              <i data-lucide="sparkles"></i>
+              <span>What's new</span>
+            </a>
+            
+            <div class="profile-drop-divider"></div>
+            
+            <div class="profile-drop-item theme-toggle-item">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <i data-lucide="moon"></i>
+                <span>Dark theme</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="dropdown-theme-toggle" onchange="App.toggleDarkTheme(this)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div id="dropdown-signout-row" style="display: none;">
+              <div class="profile-drop-divider"></div>
+              <div class="profile-drop-item signout-btn" onclick="App.handleLogout()">
+                <i data-lucide="log-out"></i>
+                <span>Sign out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="header-chart-cta" id="header-get-started-btn" onclick="window.location.href='signup.html'">
+          Get started
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Pricing Body -->
+  <main class="pricing-main">
+    
+    <!-- 1. Free Top Section -->
+    <section class="pricing-free-section">
+      <div class="pricing-free-container">
+        <div class="free-info-block">
+          <h1 class="free-title">Free, until you’re ready</h1>
+          <p class="free-subtitle">
+            Look first at how all the markets are performing.<br>
+            Then leap into them on the platform used by 100 million traders.
+          </p>
+        </div>
+        <div class="free-card">
+          <h2 class="free-price-label">₹0</h2>
+          <p class="free-period-label">forever</p>
+          <a href="signup.html" class="gradient-signup-btn">Sign up</a>
+          <span class="free-card-tag">No credit card needed</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Plans Header & Toggler -->
+    <section class="plans-header-section">
+      <h2 class="plans-title">Plans for every level<br>of ambition</h2>
+      
+      <div class="toggle-switch-wrapper">
+        <input type="radio" id="billing-monthly" name="billing-cycle" value="monthly">
+        <label for="billing-monthly">Monthly</label>
+        
+        <input type="radio" id="billing-annually" name="billing-cycle" value="annually" checked>
+        <label for="billing-annually">
+          Annually
+          <span class="discount-badge">Save up to 17% 🔥</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- 3. Four Column Pricing Grid -->
+    <section class="pricing-grid-section">
+      <div class="plans-outer-gradient-box">
+        <div class="pricing-table-container">
+          
+          <!-- Column 1: Essential -->
+          <div class="pricing-column">
+            <h3 class="plan-name">Essential</h3>
+            <div class="plan-price-block">
+              <div class="plan-price-row">
+                <span class="plan-price-symbol">₹</span>
+                <span class="plan-price-value" id="essential-price">995</span>
+                <span class="plan-price-period">/ mo</span>
+              </div>
+              <p class="plan-price-billed" id="essential-billed">billed annually</p>
+              <p class="plan-price-saving" id="essential-saving">Save ₹3,600 a year</p>
+            </div>
+            
+            <button class="plan-cta-btn" onclick="window.location.href='signup.html'">Try free for 30 days</button>
+            <a href="signup.html" class="plan-pay-now-link">or skip trial and pay now</a>
+
+            <ul class="column-features-list">
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  2 charts per tab
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 12.5%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  5 indicators per chart
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 10%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  10K historical bars
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 25%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  10 parallel chart connections
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 5%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  20 price alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 2%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  20 technical alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 2%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>0 watchlist alerts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Web, desktop and mobile apps</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>No ads</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume profile</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom timeframes</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom range bars</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multiple watchlists</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Figure charts</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Charts based on custom formulas</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Multi-condition alerts</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Time price opportunity</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Volume footprint</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Volume candles</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Auto chart patterns</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Alerts that don't expire</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Publishing invite-only scripts</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Second-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Tick-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Ability to buy professional market data</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>First priority support</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 2: Plus -->
+          <div class="pricing-column">
+            <h3 class="plan-name">Plus</h3>
+            <div class="plan-price-block">
+              <div class="plan-price-row">
+                <span class="plan-price-symbol">₹</span>
+                <span class="plan-price-value" id="plus-price">2,095</span>
+                <span class="plan-price-period">/ mo</span>
+              </div>
+              <p class="plan-price-billed" id="plus-billed">billed annually</p>
+              <p class="plan-price-saving" id="plus-saving">Save ₹6,000 a year</p>
+            </div>
+            
+            <button class="plan-cta-btn" onclick="window.location.href='signup.html'">Try free for 30 days</button>
+            <a href="signup.html" class="plan-pay-now-link">or skip trial and pay now</a>
+
+            <ul class="column-features-list">
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  4 charts per tab
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 25%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  10 indicators per chart
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 20%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  10K historical bars
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 25%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  20 parallel chart connections
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 10%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  100 price alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 10%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  100 technical alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 10%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>0 watchlist alerts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Web, desktop and mobile apps</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>No ads</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume profile</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom timeframes</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom range bars</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multiple watchlists</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Figure charts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Charts based on custom formulas</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multi-condition alerts</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Time price opportunity</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Volume footprint</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Volume candles</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Auto chart patterns</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Alerts that don't expire</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Publishing invite-only scripts</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Second-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Tick-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Ability to buy professional market data</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>First priority support</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Premium -->
+          <div class="pricing-column">
+            <h3 class="plan-name">Premium</h3>
+            <div class="plan-price-block">
+              <div class="plan-price-row">
+                <span class="plan-price-symbol">₹</span>
+                <span class="plan-price-value" id="premium-price">4,195</span>
+                <span class="plan-price-period">/ mo</span>
+              </div>
+              <p class="plan-price-billed" id="premium-billed">billed annually</p>
+              <p class="plan-price-saving" id="premium-saving">Save ₹10,800 a year</p>
+            </div>
+            
+            <button class="plan-cta-btn" onclick="window.location.href='signup.html'">Try free for 30 days</button>
+            <a href="signup.html" class="plan-pay-now-link">or skip trial and pay now</a>
+
+            <ul class="column-features-list">
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  8 charts per tab
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 50%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  25 indicators per chart
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 50%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  20K historical bars
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 50%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  50 parallel chart connections
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 25%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  400 price alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 40%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  400 technical alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 40%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  2 watchlist alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 13.3%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Web, desktop and mobile apps</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>No ads</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume profile</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom timeframes</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom range bars</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multiple watchlists</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Figure charts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Charts based on custom formulas</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multi-condition alerts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Time price opportunity</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume footprint</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume candles</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Auto chart patterns</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Alerts that don't expire</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Publishing invite-only scripts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Second-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Tick-based intervals</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>Ability to buy professional market data</div>
+              </li>
+              <li class="feature-item muted">
+                <i data-lucide="x" class="cross-icon"></i>
+                <div>First priority support</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 4: Ultimate -->
+          <div class="pricing-column">
+            <h3 class="plan-name">Ultimate</h3>
+            <div class="plan-price-block">
+              <div class="plan-price-row">
+                <span class="plan-price-symbol">₹</span>
+                <span class="plan-price-value" id="ultimate-price">17,333</span>
+                <span class="plan-price-period">/ mo</span>
+              </div>
+              <p class="plan-price-billed" id="ultimate-billed">billed annually</p>
+              <p class="plan-price-saving" id="ultimate-saving">Save ₹41,541 a year</p>
+            </div>
+            
+            <button class="plan-cta-btn" onclick="window.location.href='signup.html'">Try free for 14 days</button>
+            <a href="signup.html" class="plan-pay-now-link">or skip trial and pay now</a>
+
+            <ul class="column-features-list">
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  16 charts per tab
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  50 indicators per chart
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  40K historical bars
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  200 parallel chart connections
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  1,000 price alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  1,000 technical alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>
+                  15 watchlist alerts
+                  <div class="feature-progress-bar"><div class="feature-progress-fill" style="width: 100%;"></div></div>
+                </div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Web, desktop and mobile apps</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>No ads</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume profile</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom timeframes</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Custom range bars</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multiple watchlists</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Figure charts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Charts based on custom formulas</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Multi-condition alerts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Time price opportunity</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume footprint</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Volume candles</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Auto chart patterns</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Alerts that don't expire</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Publishing invite-only scripts</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Second-based intervals</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Tick-based intervals</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>Ability to buy professional market data</div>
+              </li>
+              <li class="feature-item">
+                <i data-lucide="check" class="check-icon"></i>
+                <div>First priority support</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Bottom Enterprise Segment -->
+          <div class="pricing-enterprise-row">
+            <div class="enterprise-left">
+              <h3>Enterprise plans</h3>
+              <p>Need 100+ subscriptions? Get in touch to find the best option for your business.</p>
+            </div>
+            <button class="enterprise-btn" onclick="window.location.href='mailto:sales@tradingview.com'">Contact sales</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Disclaimers Footnotes -->
+    <section class="pricing-footnotes-section">
+      <ul class="footnotes-list">
+        <li>1. TradingView, Inc. is registered for sales tax purposes in certain countries. As a result, depending on your location, a sales tax could be added to your final bill.</li>
+        <li>2. Only the Ultimate plan is available for professional users. Learn more about who qualifies as a professional.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- Script Libraries & State Bindings -->
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- Inline Pricing Calculator & Header Scroll observer -->
+  <script>
+    // Price database mapping
+    const prices = {
+      monthly: {
+        essential: { val: '1,295', billed: 'per month', saving: 'Regular price' },
+        plus: { val: '2,595', billed: 'per month', saving: 'Regular price' },
+        premium: { val: '5,095', billed: 'per month', saving: 'Regular price' },
+        ultimate: { val: '20,795', billed: 'per month', saving: 'Regular price' }
+      },
+      annually: {
+        essential: { val: '995', billed: 'billed annually', saving: 'Save ₹3,600 a year' },
+        plus: { val: '2,095', billed: 'billed annually', saving: 'Save ₹6,000 a year' },
+        premium: { val: '4,195', billed: 'billed annually', saving: 'Save ₹10,800 a year' },
+        ultimate: { val: '17,333', billed: 'billed annually', saving: 'Save ₹41,541 a year' }
+      }
+    };
+
+    function updatePricing(cycle) {
+      const cycleData = prices[cycle];
+      
+      // Update values
+      document.getElementById('essential-price').innerText = cycleData.essential.val;
+      document.getElementById('essential-billed').innerText = cycleData.essential.billed;
+      document.getElementById('essential-saving').innerText = cycleData.essential.saving;
+      document.getElementById('essential-saving').style.visibility = cycle === 'annually' ? 'visible' : 'hidden';
+
+      document.getElementById('plus-price').innerText = cycleData.plus.val;
+      document.getElementById('plus-billed').innerText = cycleData.plus.billed;
+      document.getElementById('plus-saving').innerText = cycleData.plus.saving;
+      document.getElementById('plus-saving').style.visibility = cycle === 'annually' ? 'visible' : 'hidden';
+
+      document.getElementById('premium-price').innerText = cycleData.premium.val;
+      document.getElementById('premium-billed').innerText = cycleData.premium.billed;
+      document.getElementById('premium-saving').innerText = cycleData.premium.saving;
+      document.getElementById('premium-saving').style.visibility = cycle === 'annually' ? 'visible' : 'hidden';
+
+      document.getElementById('ultimate-price').innerText = cycleData.ultimate.val;
+      document.getElementById('ultimate-billed').innerText = cycleData.ultimate.billed;
+      document.getElementById('ultimate-saving').innerText = cycleData.ultimate.saving;
+      document.getElementById('ultimate-saving').style.visibility = cycle === 'annually' ? 'visible' : 'hidden';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Bind toggle change events
+      document.querySelectorAll('input[name="billing-cycle"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          updatePricing(e.target.value);
+        });
+      });
+
+      // Bind scroll listeners specifically for pricing page header
+      window.addEventListener('scroll', () => {
+        const header = document.querySelector('.app-header');
+        if (header) {
+          if (window.scrollY > 50) {
+            header.classList.add('scrolled');
+          } else {
+            header.classList.remove('scrolled');
+          }
+        }
+      });
+
+      // Ensure Lucide icons compile properly
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

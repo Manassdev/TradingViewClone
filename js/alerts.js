@@ -1,93 +1,211 @@
-/* Real-time price cross alarm checks, alert creations and triggers */
+/* Backend-owned alerts and persistent notification UI. */
+
+let backendNotifications = [];
+
+const formatAlertCondition = (condition) => ({
+  greater_than: 'at or above', above: 'at or above',
+  less_than: 'at or below', below: 'at or below',
+  crosses_up: 'crosses up', crosses_down: 'crosses down'
+}[condition] || condition);
+
+const formatNotificationAge = (createdAt) => {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '';
+  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+};
 
 window.renderAlerts = function() {
   const list = document.getElementById('active-alerts-list');
   if (!list) return;
-
-  if (AppState.alerts.length === 0) {
-    list.innerHTML = `<div style="text-align:center; padding:20px 0; font-size:11px; color:var(--text-muted);">No active target price alerts set</div>`;
+  list.replaceChildren();
+  if (!window.ApiClient?.getToken()) {
+    const note = document.createElement('p');
+    note.className = 'alert-empty-state';
+    note.textContent = 'Sign in to create and manage price alerts.';
+    list.appendChild(note);
+    return;
+  }
+  const alerts = Array.isArray(AppState.alerts) ? AppState.alerts.filter((item) => item.isActive) : [];
+  if (!alerts.length) {
+    const note = document.createElement('p');
+    note.className = 'alert-empty-state';
+    note.textContent = 'No price alerts yet.';
+    list.appendChild(note);
     return;
   }
 
-  list.innerHTML = AppState.alerts.map(a => `
-    <div class="alert-row">
-      <div class="alert-details">
-        <span class="symbol">${a.symbol}</span>
-        <span class="desc">Crosses ${a.condition.toUpperCase()} $${a.target.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-      </div>
-      <div class="alert-right">
-        <button class="alert-delete-btn" onclick="window.AppModule.handleDeleteAlert(${a.id})">
-          <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
-        </button>
-      </div>
-    </div>
-  `).join('');
-  lucide.createIcons();
+  for (const alert of alerts) {
+    const row = document.createElement('div');
+    row.className = 'alert-row';
+    const details = document.createElement('div');
+    details.className = 'alert-details';
+    const symbol = document.createElement('strong');
+    symbol.textContent = alert.symbol;
+    const description = document.createElement('span');
+    description.textContent = `${formatAlertCondition(alert.triggerCondition)} ${Number(alert.targetValue).toLocaleString()}${alert.isTriggered ? ' · Triggered' : ''}`;
+    details.append(symbol, description);
+    if (alert.monitoringAvailable === false || alert.provider === 'unavailable') {
+      const unavailable = document.createElement('small');
+      unavailable.className = 'alert-provider-note';
+      unavailable.textContent = 'Stock monitoring unavailable until a live provider is configured.';
+      details.appendChild(unavailable);
+    }
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'alert-delete-btn';
+    remove.textContent = 'Cancel';
+    remove.setAttribute('aria-label', `Cancel ${alert.symbol} price alert`);
+    remove.addEventListener('click', () => window.handleDeleteAlert(alert._id));
+    row.append(details, remove);
+    list.appendChild(row);
+  }
 };
 
-window.handleCreateAlert = function() {
+window.renderNotifications = function() {
+  const list = document.getElementById('notifications-list');
+  const count = document.getElementById('notifications-unread-count');
+  if (!list) return;
+  list.replaceChildren();
+  const unread = backendNotifications.filter((item) => !item.isRead).length;
+  if (count) count.textContent = unread ? `${unread} unread` : '';
+  if (!window.ApiClient?.getToken()) {
+    const note = document.createElement('p');
+    note.className = 'alert-empty-state';
+    note.textContent = 'Sign in to view notifications.';
+    list.appendChild(note);
+    return;
+  }
+  if (!backendNotifications.length) {
+    const note = document.createElement('p');
+    note.className = 'alert-empty-state';
+    note.textContent = 'No notifications yet.';
+    list.appendChild(note);
+    return;
+  }
+  for (const notification of backendNotifications) {
+    const item = document.createElement('article');
+    item.className = `notification-item${notification.isRead ? '' : ' unread'}`;
+    const title = document.createElement('strong');
+    title.textContent = notification.title;
+    const message = document.createElement('p');
+    message.textContent = notification.message;
+    const age = document.createElement('small');
+    age.textContent = formatNotificationAge(notification.createdAt);
+    item.append(title, message, age);
+    if (!notification.isRead) {
+      const markRead = document.createElement('button');
+      markRead.type = 'button';
+      markRead.textContent = 'Mark read';
+      markRead.addEventListener('click', () => window.markNotificationRead(notification._id));
+      item.appendChild(markRead);
+    }
+    list.appendChild(item);
+  }
+};
+
+window.handleCreateAlert = async function() {
+  if (!window.ApiClient?.getToken()) {
+    showToast('Sign in to create price alerts.', 'error');
+    return;
+  }
   const targetInput = document.getElementById('alert-form-target');
-  const targetVal = parseFloat(targetInput?.value) || 0;
-  const cond = document.getElementById('alert-form-condition').value;
-  const symbol = AppState.activeSymbol;
-
-  if (targetVal <= 0) {
-    showToast('Please enter a valid price threshold', 'error');
+  const symbol = String(AppState.activeSymbol || '').trim().toUpperCase();
+  const symbolInput = document.getElementById('alert-form-symbol');
+  if (symbolInput) symbolInput.value = symbol;
+  const targetValue = Number(targetInput?.value);
+  const selectedCondition = document.getElementById('alert-form-condition')?.value;
+  if (!symbol || !Number.isFinite(targetValue) || targetValue <= 0) {
+    showToast('Please enter a valid positive target price.', 'error');
     return;
   }
-
-  AppState.alerts.push({
-    id: Date.now(),
+  const assetType = symbol.endsWith('USDT') ? 'crypto' : 'stock';
+  const response = await window.ApiClient.alerts.create({
     symbol,
-    condition: cond,
-    target: targetVal,
-    active: true
+    assetType,
+    exchange: assetType === 'crypto' ? 'BINANCE' : 'NSE',
+    condition: selectedCondition === 'below' ? 'less_than' : 'greater_than',
+    targetValue
   });
-
-  saveState();
-  renderAlerts();
+  if (!response.ok || !response.data?.data) {
+    showToast(response.data?.message || 'Could not create the alert.', 'error');
+    return;
+  }
+  AppState.alerts.unshift(response.data.data);
   if (targetInput) targetInput.value = '';
-  showToast('Target alert created successfully', 'success');
-};
-
-window.handleDeleteAlert = function(id) {
-  AppState.alerts = AppState.alerts.filter(a => a.id !== id);
-  saveState();
   renderAlerts();
-  showToast('Alert deactivated', 'success');
+  showToast(assetType === 'stock' ? 'Alert saved. Stock monitoring is unavailable until a live provider is configured.' : 'Price alert created.', 'success');
 };
 
-window.checkPriceAlerts = function(symbol, currentPrice) {
-  AppState.alerts.forEach(a => {
-    if (a.symbol === symbol && a.active) {
-      let triggered = false;
-      if (a.condition === 'above' && currentPrice >= a.target) triggered = true;
-      if (a.condition === 'below' && currentPrice <= a.target) triggered = true;
+window.handleDeleteAlert = async function(id) {
+  if (!id || !window.ApiClient?.getToken()) return;
+  const response = await window.ApiClient.alerts.delete(id);
+  if (!response.ok) {
+    showToast(response.data?.message || 'Could not cancel the alert.', 'error');
+    return;
+  }
+  AppState.alerts = AppState.alerts.filter((item) => String(item._id) !== String(id));
+  renderAlerts();
+  showToast('Alert cancelled.', 'success');
+};
 
-      if (triggered) {
-        a.active = false;
-        AppState.alerts = AppState.alerts.filter(al => al.id !== a.id);
-        saveState();
-        renderAlerts();
-        triggerAlertPopup(a.symbol, a.condition, a.target);
-      }
+window.syncAlertsFromBackend = async function() {
+  if (!window.ApiClient?.getToken()) {
+    AppState.alerts = [];
+    backendNotifications = [];
+    renderAlerts();
+    renderNotifications();
+    return;
+  }
+  const [alertResponse, notificationResponse] = await Promise.all([
+    window.ApiClient.alerts.get(),
+    window.ApiClient.notifications.get()
+  ]);
+  if (alertResponse.ok && Array.isArray(alertResponse.data?.data)) AppState.alerts = alertResponse.data.data;
+  if (notificationResponse.ok && Array.isArray(notificationResponse.data?.data)) backendNotifications = notificationResponse.data.data;
+  renderAlerts();
+  renderNotifications();
+};
+
+window.markNotificationRead = async function(id) {
+  const response = await window.ApiClient.notifications.markRead(id);
+  if (!response.ok) {
+    showToast(response.data?.message || 'Could not update the notification.', 'error');
+    return;
+  }
+  const item = backendNotifications.find((notification) => notification._id === id);
+  if (item) item.isRead = true;
+  renderNotifications();
+};
+
+window.markAllNotificationsRead = async function() {
+  const response = await window.ApiClient.notifications.markAllRead();
+  if (!response.ok) {
+    showToast(response.data?.message || 'Could not update notifications.', 'error');
+    return;
+  }
+  backendNotifications = backendNotifications.map((item) => ({ ...item, isRead: true }));
+  renderNotifications();
+};
+
+window.setInterval(() => {
+  if (!window.ApiClient?.getToken()) return;
+  Promise.all([window.ApiClient.alerts.get(), window.ApiClient.notifications.get()]).then(([alertsResponse, notificationsResponse]) => {
+    if (alertsResponse.ok && Array.isArray(alertsResponse.data?.data)) {
+      AppState.alerts = alertsResponse.data.data;
+      renderAlerts();
+    }
+    if (notificationsResponse.ok && Array.isArray(notificationsResponse.data?.data)) {
+      backendNotifications = notificationsResponse.data.data;
+      renderNotifications();
     }
   });
-};
+}, 30_000);
 
-window.triggerAlertPopup = function(symbol, cond, target) {
-  showToast(`ALERT CROSS: ${symbol} has crossed ${cond.toUpperCase()} target of $${target}!`, 'warning');
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.45);
-  } catch(e){}
-
-  confetti({ particleCount: 80, spread: 60, colors: ['#ffb700', '#ffffff', '#2962ff'] });
-};
+// Kept as a compatibility hook for older callers; browser ticks are never authoritative.
+window.checkPriceAlerts = function() {};
