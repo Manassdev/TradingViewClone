@@ -153,6 +153,7 @@
       const username = usernameInput.value.trim();
       const email = emailInput.value.trim();
       const password = passInput.value;
+      const submit = e.currentTarget.querySelector('button[type="submit"]');
 
       errorBox.style.display = 'none';
 
@@ -168,6 +169,7 @@
         return;
       }
 
+      if (submit) { submit.disabled = true; submit.innerText = 'Creating account…'; }
       try {
         const result = await TradingApi.signup({ username, email, password });
         TradingApi.setSession(result.token);
@@ -175,6 +177,8 @@
       } catch (error) {
         errorBox.innerText = error.message || 'Account creation failed';
         errorBox.style.display = 'block';
+      } finally {
+        if (submit) { submit.disabled = false; submit.innerText = 'Create account'; }
       }
     }
   </script>

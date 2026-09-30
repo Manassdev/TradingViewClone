@@ -7,6 +7,7 @@ function errorHandler(error, req, res, next) {
   if (error.name === 'ValidationError' || error.name === 'CastError') {
     return res.status(400).json({ error: 'Invalid request data' });
   }
+  if (error.statusCode === 400) return res.status(400).json({ error: error.message });
   if (error.code === 11000) return res.status(409).json({ error: 'Account already exists' });
   if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid JSON body' });
   console.error('Request failed:', error.name || 'Error');

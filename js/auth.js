@@ -1,6 +1,6 @@
 /* Auth dialog validations, modal settings, and user session management */
 
-window.handleLogout = function() {
+window.handleLogout = function(showMessage = true) {
   AppState.user = null;
   TradingApi.clearSession();
   AppState.watchlist = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT'];
@@ -12,8 +12,13 @@ window.handleLogout = function() {
   renderPortfolio();
   updateHeaderUserDom();
   renderProfile();
-  showToast('Logged out', 'success');
+  if (showMessage) showToast('Logged out', 'success');
 };
+
+window.addEventListener('trading:auth-expired', () => {
+  handleLogout(false);
+  showToast('Your session expired. Please sign in again.', 'warning');
+});
 
 window.updateHeaderUserDom = function() {
   renderHeader();

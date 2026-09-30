@@ -10,6 +10,6 @@ const portfolioSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   balance: { type: Number, default: 100000, min: 0 },
   holdings: { type: [holdingSchema], default: [] }
-}, { timestamps: true });
+}, { timestamps: true, collection: 'portfolios' });
 
 module.exports = mongoose.model('Portfolio', portfolioSchema);

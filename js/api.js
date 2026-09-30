@@ -6,12 +6,27 @@
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     const token = sessionStorage.getItem(tokenKey);
     if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await fetch(`/api${path}`, { ...options, headers });
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+    let response;
+    try {
+      response = await fetch(`/api${path}`, { ...options, headers, signal: options.signal || controller.signal });
+    } catch (error) {
+      if (error.name === 'AbortError') throw new Error('The server took too long to respond. Please try again.');
+      throw new Error('Could not reach the server. Check that the backend is running and try again.');
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
     if (response.status === 204) return null;
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      if (response.status === 401) sessionStorage.removeItem(tokenKey);
-      throw new Error(data.error || `Request failed (${response.status})`);
+      const error = new Error(data.error || `Request failed (${response.status})`);
+      error.status = response.status;
+      if (response.status === 401 && sessionStorage.getItem(tokenKey)) {
+        sessionStorage.removeItem(tokenKey);
+        window.dispatchEvent(new CustomEvent('trading:auth-expired'));
+      }
+      throw error;
     }
     return data;
   }
@@ -32,6 +47,7 @@
     createAlert: (payload) => request('/alerts', { method: 'POST', body: JSON.stringify(payload) }),
     deleteAlert: (id) => request(`/alerts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     getPortfolio: () => request('/portfolio'),
+    getOrders: () => request('/portfolio/orders'),
     placeOrder: (payload) => request('/portfolio/orders', { method: 'POST', body: JSON.stringify(payload) })
   };
 })();

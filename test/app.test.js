@@ -2,10 +2,11 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { createApp } = require('../server/app');
 
-const server = createApp();
+let server;
 let origin;
 before(async () => {
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const app = createApp();
+  await new Promise((resolve) => { server = app.listen(0, '127.0.0.1', resolve); });
   origin = `http://127.0.0.1:${server.address().port}`;
 });
 after(() => new Promise((resolve) => server.close(resolve)));
@@ -24,8 +25,10 @@ test('health endpoint reports the MongoDB connection state without revealing con
 });
 
 test('account APIs reject requests without a bearer token', async () => {
-  const response = await fetch(`${origin}/api/watchlist`);
-  assert.equal(response.status, 401);
+  for (const path of ['/api/auth/me', '/api/watchlist', '/api/alerts', '/api/portfolio', '/api/portfolio/orders']) {
+    const response = await fetch(`${origin}${path}`);
+    assert.equal(response.status, 401, `${path} must require authentication`);
+  }
 });
 
 test('signup rejects weak passwords before touching the database', async () => {

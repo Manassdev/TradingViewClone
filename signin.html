@@ -146,8 +146,10 @@
 
       const email = emailInput.value.trim();
       const password = passInput.value;
+      const submit = e.currentTarget.querySelector('button[type="submit"]');
 
       errorBox.style.display = 'none';
+      if (submit) { submit.disabled = true; submit.innerText = 'Signing in…'; }
 
       try {
         const result = await TradingApi.login({ login: email, password });
@@ -156,6 +158,8 @@
       } catch (error) {
         errorBox.innerText = error.message || 'Sign-in failed';
         errorBox.style.display = 'block';
+      } finally {
+        if (submit) { submit.disabled = false; submit.innerText = 'Sign in'; }
       }
     }
   </script>

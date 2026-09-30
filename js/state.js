@@ -95,9 +95,8 @@ window.loadAccountState = async function() {
     AppState.portfolio = portfolio.portfolio;
     AppState.portfolio.transactions = portfolio.transactions;
   } catch (error) {
-    TradingApi.clearSession();
     AppState.user = null;
-    showToast(error.message || 'Could not load your account data', 'error');
+    if (TradingApi.getToken()) showToast(error.message || 'Could not load your account data', 'error');
   }
 };
 

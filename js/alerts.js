@@ -37,6 +37,8 @@ window.handleCreateAlert = async function() {
   }
 
   if (!AppState.user) return showToast('Sign in to create alerts', 'warning');
+  const submit = document.querySelector('.create-alert-btn');
+  if (submit) { submit.disabled = true; submit.dataset.originalText = submit.innerText; submit.innerText = 'Creating…'; }
   try {
     const { alert } = await TradingApi.createAlert({ symbol, condition: cond, target: targetVal });
     AppState.alerts.push({ id: alert._id, symbol: alert.symbol, condition: alert.condition, target: alert.target, active: true });
@@ -44,6 +46,7 @@ window.handleCreateAlert = async function() {
     if (targetInput) targetInput.value = '';
     showToast('Target alert created successfully', 'success');
   } catch (error) { showToast(error.message, 'error'); }
+  finally { if (submit) { submit.disabled = false; submit.innerText = submit.dataset.originalText || 'Create Alert Trigger'; } }
 };
 
 window.handleDeleteAlert = async function(id) {

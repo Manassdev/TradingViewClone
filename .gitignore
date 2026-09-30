@@ -1,5 +1,7 @@
 node_modules/
 .npm-cache/
 .env
+.env.*
+!.env.example
 npm-debug.log*
 coverage/
