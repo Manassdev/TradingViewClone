@@ -1,14 +1,19 @@
 import mongoose from 'mongoose';
 
 const watchlistSchema = new mongoose.Schema({
-  // Mixed preserves compatibility with existing string and ObjectId owner IDs.
-  userId: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true
+  // The existing MongoDB collection validator and unique index use `user`.
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    unique: true
   },
 
-  // New records represent one selected asset. Legacy list documents below keep
-  // their symbols array and are read without a destructive migration.
+  // Legacy per-asset records may still use userId; new records use user.
+  userId: {
+    type: mongoose.Schema.Types.Mixed
+  },
+
+  // Retained so records from the earlier per-asset API remain readable.
   symbol: {
     type: String,
     uppercase: true,
@@ -40,7 +45,11 @@ const watchlistSchema = new mongoose.Schema({
   name: String,
   symbols: {
     type: [String],
-    default: undefined
+    default: []
+  },
+  favorites: {
+    type: [String],
+    default: []
   },
   updatedAt: Date
 }, {

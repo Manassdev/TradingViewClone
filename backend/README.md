@@ -7,7 +7,7 @@ A modular Node.js + Express REST API server providing authentication, watchlists
 ## 1. System Architecture
 
 ```text
-Frontend UI (HTML5, CSS3, Vanilla ES6 JS)
+Frontend UI (React, Vite, React Router, Tailwind CSS)
         │
         ├── Direct Client Feed (Low Latency):
         │   └── Binance WebSockets (stream.binance.com) -> Live Candlestick Ticks
@@ -18,10 +18,12 @@ Frontend UI (HTML5, CSS3, Vanilla ES6 JS)
         Node.js / Express Backend (http://localhost:5000)
         ├── CORS & Error Handling Middleware
         ├── JWT Authentication Middleware (Bearer Token)
-        ├── Controllers (Auth, Watchlist, Alert, Comment, Market)
+        ├── Controllers (Auth, Watchlist, Alert, Comment, Market, Paper Trading)
         │
         ├── External Market Proxy:
         │   └── Binance REST API (api.binance.com) -> Historical Klines & 24hr Ticker
+        ├── External News Proxy:
+        │   └── GNews Search API -> Community News (in-memory cache; no database writes)
         │
         └── Database Layer (Mongoose ODM):
             └── MongoDB Atlas Cluster / Local Instance (Database: "tradingview")
@@ -57,14 +59,21 @@ backend/
 │   ├── watchlistController.js # Get, add, remove watchlist symbols
 │   ├── alertController.js     # CRUD for target price alerts
 │   ├── commentController.js   # Get idea comments, post, delete
-│   └── marketController.js    # Binance REST proxy endpoints
+│   ├── marketController.js    # Binance REST proxy and generated ideas
+│   └── newsController.js      # Validated GNews news endpoint
+│
+├── services/
+│   ├── marketDataService.js   # Bounded Binance requests and short idea-response cache
+│   ├── ideaGenerator.js       # Deterministic technical-analysis rules
+│   └── newsService.js         # GNews requests, normalization, quota guard, and cache
 │
 ├── routes/
 │   ├── authRoutes.js          # /api/auth routes
 │   ├── watchlistRoutes.js     # /api/watchlist routes
 │   ├── alertRoutes.js         # /api/alerts routes
 │   ├── commentRoutes.js       # /api/comments routes
-│   └── marketRoutes.js        # /api/market routes
+│   ├── marketRoutes.js        # /api/market routes
+│   └── newsRoutes.js          # /api/news route
 │
 └── middleware/
     ├── authMiddleware.js      # JWT protect & optionalAuth
@@ -89,6 +98,9 @@ MONGODB_URI=mongodb://127.0.0.1:27017/tradingview
 
 # Strong secret for signing JWT tokens
 JWT_SECRET=<generate-a-unique-random-secret-of-at-least-32-characters>
+
+# GNews API key (kept on the backend only)
+GNEWS_API_KEY=<your-gnews-api-key>
 ```
 
 > **Security Note:** `.env` is listed in `.gitignore` and must never be committed to source control or exposed to frontend client code.
@@ -165,7 +177,35 @@ Expected JSON response:
 |---|---|---|---|
 | `GET` | `/api/market/klines` | Public | Proxies Binance historical candlestick data (`symbol`, `interval`, `limit`). |
 | `GET` | `/api/market/ticker` | Public | Proxies Binance 24hr quote changes. |
+| `GET` | `/api/market/ideas` | Public | Generates current cryptocurrency ideas from Binance tickers and completed hourly candles. |
 | `GET` | `/api/market/status` | Public | Returns market classification metadata (Crypto: LIVE, Stocks/Indices: STATIC/MOCK). |
+
+### Community News (`/api/news`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/news` | Public | Returns normalized, newest-first articles from GNews. Optional `category`: `all`, `cryptocurrency`, `stock_market`, `economy`, or `regulation`. |
+
+The GNews API key is read only by the backend from `GNEWS_API_KEY`. The endpoint uses GNews Search with fixed, validated queries and English-language results. The `all` category combines four topic searches, deduplicates articles by canonical URL, and returns up to 40 results. Category results are cached in memory for two hours; overlapping same-category requests are coalesced and outbound requests are spaced to respect the Free plan's one-request-per-second limit. A process-local daily request guard caps provider traffic at 90 calls to leave room below the Free plan's 100-request daily allowance. News is not stored in MongoDB.
+
+Each response includes `meta.retrievedAt`, which is the backend retrieval time. Each article's `publishedAt` is the publication time returned by GNews. The Free plan may delay article availability by up to 12 hours and returns at most 10 articles per search. The UI discloses this limitation.
+
+Run backend checks with `npm test` from the `backend/` directory.
+
+### Generated cryptocurrency ideas
+
+`GET /api/market/ideas` analyzes BTCUSDT, ETHUSDT, BNBUSDT, SOLUSDT, and XRPUSDT. It does not write ideas to MongoDB. The response contains `success`, `data`, and `meta`. Each idea includes a stable ID, explicit signal `kind`, direction, current Binance price, 24-hour percentage change, explanation, generation time, price timestamp, and latest completed candle timestamp. It also includes the latest 24 completed hourly `chartData` closes for the Community Ideas card preview. `meta.unavailableSymbols` and `meta.insufficientSymbols` identify pairs that could not be analyzed fully. Partial market-data failures do not suppress ideas for healthy pairs.
+
+The endpoint caches a successful result for 45 seconds and coalesces overlapping refreshes. Binance calls time out after 8 seconds; kline requests run with a maximum concurrency of three. A fully unavailable market response returns HTTP 503 with a `Retry-After` header.
+
+The signal rules are deterministic and use completed 1-hour candles:
+
+* Bullish crossover: the 9-candle SMA was at or below the 21-candle SMA on the preceding completed candle and is above it on the latest completed candle.
+* Bearish crossover: the 9-candle SMA was at or above the 21-candle SMA on the preceding completed candle and is below it on the latest completed candle.
+* Resistance breakout: latest completed close is above the highest high of the prior 20 completed candles.
+* Support breakdown: latest completed close is below the lowest low of the prior 20 completed candles.
+* Positive or negative momentum: Binance's 24-hour ticker change is at least +5% or at most -5%.
+
+Moving-average ideas require at least 22 completed candles; breakout ideas require at least 21. Missing history produces no indicator signal. These examples are not guaranteed predictions or investment advice.
 
 ---
 
@@ -222,3 +262,17 @@ Expected JSON response:
   "createdAt": "ISODate"
 }
 ```
+
+## React frontend and paper trading
+
+Install the frontend dependencies once and start Vite from the project root:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Vite proxies `/api` to the Express server at `http://localhost:5000`; set `VITE_BACKEND_ORIGIN` if the backend uses another origin. Run `npm run build` in `frontend/` to create a production build.
+
+Paper trading is authenticated and simulated only. Each account starts with 100,000 USDT. The portfolio, performance, market-order, and reset endpoints use server-fetched Binance prices and the signed-in account. Order requests require an `Idempotency-Key` UUID. No real exchange orders are placed.

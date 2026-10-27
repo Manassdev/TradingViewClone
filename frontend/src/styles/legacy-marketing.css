@@ -1,0 +1,3 @@
+.legacy-marketing-content { min-height: calc(100vh - 130px); color: var(--text-primary); }
+.legacy-marketing-content main, .legacy-marketing-content section { max-width: none; }
+.legacy-marketing-content img { max-width: 100%; height: auto; }

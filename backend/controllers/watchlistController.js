@@ -9,6 +9,13 @@ const userIdsFor = (userId) => {
   return ids;
 };
 
+const ownerFilterFor = (userId) => ({
+  $or: [
+    ...(mongoose.Types.ObjectId.isValid(userId) ? [{ user: new mongoose.Types.ObjectId(userId) }] : []),
+    { userId: { $in: userIdsFor(userId) } }
+  ]
+});
+
 const identityKey = (item) => `${item.assetType}:${item.symbol}`;
 
 const normalizeLegacySymbol = (symbol, documentId) => {
@@ -27,7 +34,7 @@ const normalizeLegacySymbol = (symbol, documentId) => {
 };
 
 const listUserAssets = async (userId) => {
-  const docs = await Watchlist.find({ userId: { $in: userIdsFor(userId) } })
+  const docs = await Watchlist.find(ownerFilterFor(userId))
     .sort({ _id: 1 })
     .lean();
   const assets = new Map();
@@ -88,8 +95,9 @@ export const addToWatchlist = async (req, res) => {
     }
 
     const symbol = rawSymbol.trim().toUpperCase();
-    if (!/^[A-Z0-9][A-Z0-9._&-]{0,29}$/.test(symbol)) {
-      return res.status(400).json({ success: false, message: 'Symbol contains unsupported characters.' });
+    // The existing MongoDB validator accepts uppercase letters and digits only.
+    if (!/^[A-Z0-9]{2,20}$/.test(symbol)) {
+      return res.status(400).json({ success: false, message: 'Symbol must contain 2–20 letters or numbers.' });
     }
 
     // Infer legacy clients' asset type while allowing explicit stock/crypto types.
@@ -123,18 +131,27 @@ export const addToWatchlist = async (req, res) => {
     if (currentItems.some((item) => item.assetType === assetType && item.symbol === symbol)) {
       return res.status(409).json({ success: false, message: 'This asset is already in your watchlist.' });
     }
+    if (currentItems.length >= 100) {
+      return res.status(409).json({ success: false, message: 'A watchlist can contain at most 100 assets.' });
+    }
 
     // Build the unique partial index before the write to make concurrent adds safe.
     await Watchlist.init();
-    const item = await Watchlist.create({
-      userId: req.user.id,
-      symbol,
-      assetType,
-      exchange,
-      provider,
-      displayName,
-      createdAt: new Date()
-    });
+    const userObjectId = new mongoose.Types.ObjectId(req.user.id);
+    const watchlist = await Watchlist.findOneAndUpdate(
+      { user: userObjectId },
+      {
+        $setOnInsert: { user: userObjectId, name: 'My Watchlist', favorites: [] },
+        $addToSet: { symbols: symbol },
+        $set: { updatedAt: new Date() }
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+    const item = normalizeLegacySymbol(symbol, watchlist._id);
+    item.assetType = assetType;
+    item.exchange = exchange;
+    item.provider = provider;
+    item.displayName = displayName;
 
     return res.status(201).json({
       success: true,
@@ -161,20 +178,20 @@ export const addToWatchlist = async (req, res) => {
 export const removeFromWatchlist = async (req, res) => {
   try {
     const id = req.params.id;
-    const userIds = userIdsFor(req.user.id);
+    const ownerFilter = ownerFilterFor(req.user.id);
 
     if (id.startsWith('legacy:')) {
       const [, legacyDocumentId, encodedSymbol] = id.split(':');
       if (!mongoose.Types.ObjectId.isValid(legacyDocumentId) || !encodedSymbol) {
         return res.status(400).json({ success: false, message: 'Watchlist item ID is invalid.' });
       }
-      const legacyDocument = await Watchlist.findOne({ _id: legacyDocumentId, userId: { $in: userIds }, symbols: { $exists: true } }).select('_id');
+      const legacyDocument = await Watchlist.findOne({ _id: legacyDocumentId, ...ownerFilter, symbols: { $exists: true } }).select('_id');
       if (!legacyDocument) {
         return res.status(404).json({ success: false, message: 'Watchlist item not found.' });
       }
       const symbol = Buffer.from(encodedSymbol, 'base64url').toString('utf8');
       const result = await Watchlist.updateMany(
-        { userId: { $in: userIds }, symbols: symbol },
+        { ...ownerFilter, symbols: symbol },
         { $pull: { symbols: symbol }, $set: { updatedAt: new Date() } }
       );
       if (!result.modifiedCount) {
@@ -187,7 +204,7 @@ export const removeFromWatchlist = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Watchlist item ID is invalid.' });
     }
 
-    const removed = await Watchlist.findOneAndDelete({ _id: id, userId: { $in: userIds }, symbol: { $type: 'string' } });
+    const removed = await Watchlist.findOneAndDelete({ _id: id, ...ownerFilter, symbol: { $type: 'string' } });
     if (!removed) {
       return res.status(404).json({ success: false, message: 'Watchlist item not found.' });
     }

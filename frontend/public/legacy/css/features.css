@@ -1,0 +1,642 @@
+/* TradingView Clone - Explore Features Page Stylesheet */
+
+body.features-page-body {
+  background-color: #04060d;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+}
+
+/* Header Override for Features Page */
+.features-page-body .app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.features-page-body .app-header.scrolled {
+  background: rgba(8, 11, 18, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.features-page-body .app-header .logo-text {
+  color: #ffffff;
+}
+
+.features-page-body .app-header .logo-svg path {
+  fill: #ffffff;
+}
+
+.features-page-body .app-header .menu-link {
+  color: #c9cbcf;
+}
+
+.features-page-body .app-header .menu-link:hover {
+  color: #ffffff;
+}
+
+.features-page-body .app-header .header-search-container {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.features-page-body .app-header .header-search-container:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.features-page-body .app-header .header-search-container .search-icon {
+  color: #84878e;
+}
+
+.features-page-body .app-header .header-search-container input {
+  color: #ffffff;
+}
+
+.features-page-body .app-header .header-search-container input::placeholder {
+  color: #84878e;
+}
+
+.features-page-body .app-header .header-search-container .search-shortcut {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: #84878e;
+}
+
+.features-page-body .app-header .globe-btn,
+.features-page-body .app-header .profile-btn {
+  color: #c9cbcf;
+}
+
+.features-page-body .app-header .globe-btn:hover,
+.features-page-body .app-header .profile-btn:hover {
+  color: #ffffff;
+}
+
+/* main features container */
+.features-main {
+  padding-top: 64px; /* header offset */
+}
+
+/* Section styling base */
+.features-section {
+  padding: 80px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.features-container-1200 {
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 1. Top Features Hero Section */
+.hero-features-section {
+  text-align: center;
+  background-color: #04060d;
+  padding: 60px 24px 80px 24px;
+}
+
+.hero-pill-competition {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 32px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.hero-pill-competition:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-pill-label {
+  background: #ffffff;
+  color: #04060d;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.hero-pill-text {
+  color: #ffffff;
+}
+
+.hero-features-title {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 auto 24px auto;
+  max-width: 900px;
+  letter-spacing: -0.03em;
+}
+
+.hero-title-white {
+  color: #ffffff;
+}
+
+.hero-title-gradient {
+  background: linear-gradient(90deg, #00c6ff 0%, #0072ff 50%, #b000ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-preview-box {
+  position: relative;
+  max-width: 1100px;
+  margin: 60px auto 0 auto;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 198, 255, 0.2) 0%, rgba(176, 0, 255, 0.2) 100%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.hero-preview-img {
+  width: 100%;
+  border-radius: 15px;
+  display: block;
+  object-fit: cover;
+}
+
+/* 2. Wall of Love Section */
+.love-section {
+  background-color: #07090e;
+  padding: 80px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.love-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.love-title {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.02em;
+}
+
+.love-subtitle {
+  font-size: 18px;
+  color: #84878e;
+  margin: 0;
+}
+
+.love-carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.love-carousel-track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.love-carousel-track::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.love-card {
+  min-width: 320px;
+  max-width: 320px;
+  height: 220px;
+  background-color: #0f121d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.love-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.love-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+.love-arrow-btn {
+  position: absolute;
+  right: -20px;
+  width: 48px;
+  height: 48px;
+  background-color: #1e222d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.2s;
+}
+
+.love-arrow-btn:hover {
+  background-color: #2a2e39;
+}
+
+/* 3. Feature Category Navigation */
+.features-cat-nav {
+  position: sticky;
+  top: 64px;
+  background-color: rgba(4, 6, 13, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px 24px;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.cat-nav-container {
+  display: flex;
+  gap: 8px;
+  max-width: 1200px;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cat-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-nav-pill {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #84878e;
+  background: transparent;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.cat-nav-pill:hover {
+  color: #ffffff;
+}
+
+.cat-nav-pill.active {
+  background-color: #ffffff;
+  color: #04060d;
+}
+
+/* 4. Charts that move markets Section */
+.charts-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.section-icon-help {
+  color: #84878e;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.section-icon-help:hover {
+  color: #ffffff;
+}
+
+.charts-section {
+  text-align: center;
+  background-color: #04060d;
+  padding: 100px 24px 80px 24px;
+}
+
+.charts-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.charts-desc {
+  font-size: 18px;
+  color: #84878e;
+  max-width: 750px;
+  margin: 0 auto 48px auto;
+  line-height: 1.5;
+}
+
+.charts-mockup-frame {
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: #0b0e16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.charts-mockup-img {
+  width: 100%;
+  border-radius: 6px;
+  display: block;
+}
+
+/* 5. Chart Features Grid */
+.features-grid-section {
+  background-color: #04060d;
+  padding: 60px 24px;
+}
+
+.features-four-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+}
+
+.grid-col-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.grid-card-icon {
+  width: 36px;
+  height: 36px;
+  color: #0072ff;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.grid-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #ffffff;
+}
+
+.grid-card-desc {
+  font-size: 13px;
+  color: #84878e;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 6. Volume Footprint Section */
+.footprint-section {
+  background-color: #04060d;
+  padding: 80px 24px;
+}
+
+.footprint-container {
+  background-color: #0b0e16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 60px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 60px;
+  align-items: center;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+}
+
+.footprint-left {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.footprint-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.footprint-row-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footprint-row-desc {
+  font-size: 14px;
+  color: #84878e;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.footprint-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footprint-mockup-img {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  display: block;
+}
+
+/* 7. Technical Analysis & Bar Replay Section */
+.tech-replay-section {
+  background-color: #04060d;
+  padding: 80px 24px;
+}
+
+.two-cols-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+}
+
+.col-panel {
+  background-color: #0b0e16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 580px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.panel-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-desc {
+  font-size: 14px;
+  color: #84878e;
+  line-height: 1.5;
+  margin: 0 0 32px 0;
+}
+
+.panel-check-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px 0;
+}
+
+.panel-check-item {
+  font-size: 13px;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  color: #c9cbcf;
+}
+
+.panel-check-item i {
+  color: #089981;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.panel-graphic-area {
+  background-color: #07090e;
+  border-radius: 12px;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-graphic-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 8. Four Seasons & Fundamentals Section */
+.seasons-fund-section {
+  background-color: #04060d;
+  padding: 80px 24px 120px 24px;
+}
+
+.seasons-btn {
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 20px;
+  background-color: #2962ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 32px;
+}
+
+.seasons-btn:hover {
+  background-color: #1a56ff;
+}
+
+/* Footer Section */
+.features-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: #04060d;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.features-footer p {
+  font-size: 12px;
+  color: #5d606b;
+  margin: 0;
+}
+
+/* ==================================================
+   RESPONSIVE OVERRIDES
+   ================================================== */
+
+@media (max-width: 1024px) {
+  .hero-features-title {
+    font-size: 52px;
+  }
+  .features-four-cols {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .footprint-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 40px;
+  }
+  .two-cols-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-features-title {
+    font-size: 38px;
+  }
+  .love-title {
+    font-size: 38px;
+  }
+  .charts-title {
+    font-size: 38px;
+  }
+  .features-four-cols {
+    grid-template-columns: 1fr;
+  }
+  .col-panel {
+    padding: 32px;
+  }
+  .features-main {
+    padding-top: 64px;
+  }
+}

@@ -1,0 +1,21 @@
+# Local configuration and secrets. Keep checked-in templates such as .env.example.
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Installed dependencies
+node_modules/
+**/node_modules/
+
+# Generated build and test output
+dist/
+**/dist/
+coverage/
+**/coverage/
+
+# Local logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

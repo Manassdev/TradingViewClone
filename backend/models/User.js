@@ -3,22 +3,29 @@ import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: 100
   },
   username: {
     type: String,
-    trim: true
+    required: [true, 'Username is required'],
+    trim: true,
+    minlength: [3, 'Username must be at least 3 characters long'],
+    maxlength: [30, 'Username must be 30 characters or fewer']
   },
   email: {
     type: String,
     required: [true, 'Email is required'],
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    maxlength: 254,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   },
-  password: {
+  passwordHash: {
     type: String,
-    required: [true, 'Password is required'],
+    required: [true, 'Password hash is required'],
+    match: /^\$2[ab]\$\d{2}\$[./A-Za-z0-9]{53}$/,
     select: false
   },
   tokenVersion: {

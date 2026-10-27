@@ -116,6 +116,10 @@ const ideasData = {
 document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const ideaId = urlParams.get('id') || 'mm-channel-breakout';
+  if (ideaId.startsWith('binance-')) {
+    void initializeGeneratedIdea(ideaId);
+    return;
+  }
   const data = ideasData[ideaId];
 
   if (!data) {
@@ -169,6 +173,193 @@ document.addEventListener('DOMContentLoaded', () => {
   // The discussion uses the existing stable idea slug as its comment key.
   if (window.initializeIdeaComments) window.initializeIdeaComments(ideaId);
 });
+
+const GENERATED_ID_PATTERN = /^binance-(BTCUSDT|ETHUSDT|BNBUSDT|SOLUSDT|XRPUSDT)-(sma-bullish-crossover|sma-bearish-crossover|resistance-breakout|support-breakdown|positive-momentum|negative-momentum)$/;
+
+const formatIdeaTimestamp = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? 'Timestamp unavailable'
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+};
+
+const setIdeaField = (id, value) => {
+  const element = document.getElementById(id);
+  if (element) element.textContent = String(value ?? '');
+};
+
+const showGeneratedIdeaUnavailable = (message) => {
+  document.title = 'Idea unavailable — TradingView';
+  setIdeaField('page-title', document.title);
+  setIdeaField('breadcrumb-title', 'Idea unavailable');
+  setIdeaField('idea-title', 'Idea unavailable');
+  setIdeaField('symbol-info', 'BINANCE');
+  setIdeaField('direction-info', 'UNAVAILABLE');
+  setIdeaField('badge-info', 'Automated idea');
+  setIdeaField('date-info', '');
+  const description = document.getElementById('idea-description');
+  if (description) description.textContent = message;
+  document.querySelector('.idea-chart-viewport')?.setAttribute('hidden', '');
+  document.querySelector('.idea-chart-stats-bar')?.setAttribute('hidden', '');
+  document.querySelector('.author-header')?.setAttribute('hidden', '');
+  document.getElementById('community-discussion')?.setAttribute('hidden', '');
+};
+
+const renderGeneratedIdeaDescription = (idea) => {
+  const container = document.getElementById('idea-description');
+  if (!container) return;
+  container.replaceChildren();
+
+  const addHeading = (text) => {
+    const heading = document.createElement('h3');
+    heading.textContent = text;
+    container.appendChild(heading);
+  };
+  const addParagraph = (label, value) => {
+    const paragraph = document.createElement('p');
+    if (label) {
+      const strong = document.createElement('strong');
+      strong.textContent = `${label}: `;
+      paragraph.append(strong, document.createTextNode(String(value ?? '')));
+    } else {
+      paragraph.textContent = String(value ?? '');
+    }
+    container.appendChild(paragraph);
+  };
+
+  addHeading('Automated technical analysis');
+  addParagraph('Indicator', idea.indicator);
+  addParagraph('Explanation', idea.description);
+  addParagraph('Current price', new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: Number(idea.price) < 1 ? 6 : 2 }).format(Number(idea.price)));
+  addParagraph('24-hour change', `${Number(idea.change24h) >= 0 ? '+' : ''}${Number(idea.change24h).toFixed(2)}%`);
+  addParagraph('Market data timestamp', formatIdeaTimestamp(idea.priceTimestamp));
+  addParagraph('Latest completed candle', formatIdeaTimestamp(idea.candleTimestamp));
+  addParagraph('Source and interval', `${idea.source} · ${idea.interval} candles`);
+  addParagraph('', 'Automated technical-analysis example only. It is not a prediction or investment advice.');
+};
+
+const drawGeneratedIdeaChart = (canvas, candleRows, symbol) => {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  const width = Math.max(1, rect.width);
+  const height = Math.max(1, rect.height);
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.scale(ratio, ratio);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  const candles = Array.isArray(candleRows)
+    ? candleRows.filter((row) => Array.isArray(row) && row.length >= 7 && Number(row[6]) < Date.now() && Number.isFinite(Number(row[4])) && Number(row[4]) > 0)
+    : [];
+  const closes = candles.map((row) => Number(row[4]));
+  if (closes.length < 2) {
+    ctx.fillStyle = '#5d606b';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Chart data is temporarily unavailable.', 24, 42);
+    return;
+  }
+
+  ctx.strokeStyle = 'rgba(19, 23, 34, 0.07)';
+  ctx.lineWidth = 1;
+  for (let row = 1; row < 5; row += 1) {
+    const y = (height / 5) * row;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  const padding = { x: 28, y: 34 };
+  const min = Math.min(...closes);
+  const max = Math.max(...closes);
+  const range = max - min || Math.max(Math.abs(max) * 0.001, 1);
+  const points = closes.map((price, index) => ({
+    x: padding.x + (index / (closes.length - 1)) * (width - padding.x * 2),
+    y: height - padding.y - ((price - min) / range) * (height - padding.y * 2)
+  }));
+
+  ctx.beginPath();
+  points.forEach((point, index) => index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y));
+  ctx.strokeStyle = closes.at(-1) >= closes[0] ? '#089981' : '#f23645';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#131722';
+  ctx.font = '600 13px sans-serif';
+  ctx.fillText(`${symbol} · Binance · completed 1h closes`, 20, 23);
+  ctx.fillStyle = '#5d606b';
+  ctx.font = '11px sans-serif';
+  ctx.fillText(`${candles.length} completed candles`, 20, height - 12);
+};
+
+const initializeGeneratedIdea = async (ideaId) => {
+  if (!GENERATED_ID_PATTERN.test(ideaId)) {
+    showGeneratedIdeaUnavailable('This generated idea identifier is invalid. Return to Community ideas and choose a current card.');
+    return;
+  }
+
+  setIdeaField('breadcrumb-title', 'Loading generated idea…');
+  setIdeaField('idea-title', 'Loading generated idea…');
+  const apiBase = window.ApiClient?.API_BASE || 'http://localhost:5000/api';
+
+  try {
+    const response = await fetch(`${apiBase}/market/ideas`, { headers: { Accept: 'application/json' } });
+    const payload = await response.json();
+    if (!response.ok || payload?.success !== true || !Array.isArray(payload.data)) {
+      throw new Error(payload?.message || 'Could not retrieve current market ideas.');
+    }
+    const idea = payload.data.find((item) => item?.id === ideaId);
+    if (!idea) {
+      showGeneratedIdeaUnavailable('This signal is no longer present in the latest market analysis. Return to Community ideas and refresh for current signals.');
+      return;
+    }
+
+    document.title = `${idea.title} — TradingView`;
+    setIdeaField('page-title', document.title);
+    setIdeaField('breadcrumb-title', idea.title);
+    setIdeaField('idea-title', idea.title);
+    setIdeaField('symbol-info', `BINANCE:${idea.symbol}`);
+    setIdeaField('direction-info', idea.signal.toUpperCase());
+    setIdeaField('badge-info', 'Automated technical-analysis example');
+    setIdeaField('date-info', `Data as of ${formatIdeaTimestamp(idea.priceTimestamp)}`);
+    setIdeaField('stats-likes', '—');
+    setIdeaField('stats-comments', '0');
+    setIdeaField('stats-views', '—');
+    setIdeaField('author-avatar-badge', 'A');
+    setIdeaField('author-avatar-widget', 'A');
+    setIdeaField('author-name', 'Automated analysis');
+    setIdeaField('author-name-widget', 'Automated analysis');
+    setIdeaField('author-reputation-val', '—');
+    setIdeaField('profile-reputation', '—');
+    setIdeaField('profile-followers', '—');
+    setIdeaField('profile-ideas', '—');
+
+    const direction = document.getElementById('direction-info');
+    direction?.classList.remove('long', 'short');
+    direction?.classList.add(idea.signal === 'bullish' ? 'long' : 'short');
+    document.querySelector('.btn-follow')?.setAttribute('hidden', '');
+    renderGeneratedIdeaDescription(idea);
+
+    if (window.initializeIdeaComments) window.initializeIdeaComments(idea.id);
+
+    const canvas = document.getElementById('idea-chart');
+    if (canvas) {
+      try {
+        const query = new URLSearchParams({ symbol: idea.symbol, interval: '1h', limit: '72' });
+        const candleResponse = await fetch(`${apiBase}/market/klines?${query}`, { headers: { Accept: 'application/json' } });
+        if (!candleResponse.ok) throw new Error('Could not load chart candles.');
+        drawGeneratedIdeaChart(canvas, await candleResponse.json(), idea.symbol);
+      } catch {
+        drawGeneratedIdeaChart(canvas, [], idea.symbol);
+      }
+    }
+  } catch (error) {
+    showGeneratedIdeaUnavailable(error.message || 'Could not retrieve this generated idea. Return to Community ideas and refresh.');
+  }
+};
 
 // 1. M&M Chart drawing logic (Channel Breakout)
 function drawMmChart(ctx, w, h) {

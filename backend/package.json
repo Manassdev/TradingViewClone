@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test tests/news.test.js tests/communityIdeas.test.js tests/paperTrading.test.js tests/chartData.test.js",
+    "test:paper-integration": "node tests/paperTrading.mongo.integration.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

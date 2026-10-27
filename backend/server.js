@@ -9,6 +9,8 @@ import watchlistRoutes from './routes/watchlistRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import marketRoutes from './routes/marketRoutes.js';
+import newsRoutes from './routes/newsRoutes.js';
+import paperTradingRoutes from './routes/paperTradingRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import { startAlertMonitor } from './services/alertMonitor.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -67,7 +69,7 @@ app.get('/api/health', (req, res) => {
     database: isConnected ? 'connected' : 'disconnected',
     databaseType: isAtlas ? 'MongoDB Atlas' : 'Local MongoDB (migrated instance)',
     databaseName: mongoose.connection.name || 'tradingview',
-    collections: ['users', 'watchlist', 'alerts', 'comments', 'notifications'],
+    collections: ['users', 'watchlist', 'alerts', 'comments', 'notifications', 'paper_portfolios'],
     timestamp: new Date().toISOString()
   });
 });
@@ -80,6 +82,8 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/market', marketRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/paper-trading', paperTradingRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

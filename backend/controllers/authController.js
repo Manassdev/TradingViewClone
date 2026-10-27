@@ -22,13 +22,22 @@ const generateToken = (user) => {
 // @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, username, email, password } = req.body;
-    const displayName = (name || username || '').trim();
+    const { name, username, email, password } = req.body || {};
+    const suppliedName = typeof name === 'string' && name.trim() ? name : username;
+    const displayName = (typeof suppliedName === 'string' ? suppliedName : '').trim();
+    const cleanUsername = (typeof username === 'string' && username.trim() ? username : displayName).trim();
 
-    if (!displayName || !email || !password) {
+    if (!displayName || !cleanUsername || typeof email !== 'string' || typeof password !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields (name/username, email, password)'
+      });
+    }
+
+    if (cleanUsername.length < 3 || cleanUsername.length > 30) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username must be between 3 and 30 characters long.'
       });
     }
 
@@ -40,12 +49,15 @@ export const registerUser = async (req, res, next) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    if (cleanEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return res.status(400).json({ success: false, message: 'Enter a valid email address.' });
+    }
 
     // Check if user already exists
     const existing = await User.findOne({
       $or: [
         { email: cleanEmail },
-        ...(displayName ? [{ name: displayName }, { username: displayName }] : [])
+        { username: new RegExp(`^${cleanUsername.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
       ]
     });
 
@@ -58,13 +70,13 @@ export const registerUser = async (req, res, next) => {
 
     // Hash password with bcrypt
     const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
+    const passwordHash = await bcryptjs.hash(password, salt);
 
     const newUser = new User({
       name: displayName,
-      username: displayName,
+      username: cleanUsername,
       email: cleanEmail,
-      password: hashedPassword,
+      passwordHash,
       avatar: 'user'
     });
 
@@ -72,9 +84,10 @@ export const registerUser = async (req, res, next) => {
 
     // Create an initial default watchlist in the database
     const defaultWatchlist = new Watchlist({
-      userId: savedUser._id,
+      user: savedUser._id,
       name: 'My Watchlist',
-      symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT']
+      symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'],
+      favorites: []
     });
     await defaultWatchlist.save();
 
@@ -101,9 +114,9 @@ export const registerUser = async (req, res, next) => {
 // @access  Public
 export const loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return res.status(400).json({
         success: false,
         message: 'Please provide both email/username and password'
@@ -117,8 +130,12 @@ export const loginUser = async (req, res, next) => {
     const user = await User.findOne(
       isEmail
         ? { email: query.toLowerCase() }
-        : { $or: [{ username: query }, { name: query }, { email: query.toLowerCase() }] }
-    ).select('+password +tokenVersion');
+        : { $or: [
+          { username: new RegExp(`^${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+          { name: new RegExp(`^${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+          { email: query.toLowerCase() }
+        ] }
+    ).select('+passwordHash +tokenVersion');
 
     if (!user) {
       return res.status(401).json({
@@ -129,8 +146,8 @@ export const loginUser = async (req, res, next) => {
 
     // Only bcrypt hashes are accepted. Legacy records remain intact and require
     // a password reset if their stored value is not a bcrypt hash.
-    const isBcryptHash = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(user.password || '');
-    const isMatch = isBcryptHash && await bcryptjs.compare(password, user.password);
+    const isBcryptHash = /^\$2[ab]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(user.passwordHash || '');
+    const isMatch = isBcryptHash && await bcryptjs.compare(password, user.passwordHash);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -174,7 +191,7 @@ export const logoutUser = async (req, res, next) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-passwordHash');
     if (!user) {
       return res.status(404).json({
         success: false,

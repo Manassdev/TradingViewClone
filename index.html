@@ -490,115 +490,46 @@
       </section>
 
       <!-- EDITORIAL IDEAS / ANALYSES SECTION -->
-      <section class="ideas-section">
+      <section class="ideas-section" aria-labelledby="community-ideas-title">
         <div class="ideas-title-header">
-          <h2 class="section-title">Community ideas <i data-lucide="chevron-right" style="display:inline-block; vertical-align:middle; width:18px; height:18px; margin-left:4px;"></i></h2>
-          <div class="ideas-filter-chips">
-            <button class="idea-chip active">Editors' picks</button>
-            <button class="idea-chip">Popular</button>
+          <div>
+            <p class="community-ideas-eyebrow">BINANCE MARKET SIGNALS</p>
+            <h2 class="section-title" id="community-ideas-title">Community ideas</h2>
+          </div>
+          <div class="ideas-filter-chips" role="group" aria-label="Filter community ideas">
+            <button class="idea-chip active" type="button" data-idea-filter="all">All ideas</button>
+            <button class="idea-chip" type="button" data-idea-filter="bullish">Bullish</button>
+            <button class="idea-chip" type="button" data-idea-filter="bearish">Bearish</button>
+            <button class="idea-chip" type="button" data-idea-filter="breakout">Breakout</button>
+            <button class="idea-chip" type="button" data-idea-filter="moving_average">Moving Average</button>
           </div>
         </div>
-        
+        <p class="community-ideas-disclaimer">Rule-based technical analysis from Binance market data. Signals are examples, not predictions or investment advice.</p>
+        <p class="community-ideas-status" id="community-ideas-status" role="status" aria-live="polite">Loading cryptocurrency ideas…</p>
         <div class="ideas-grid-wrapper">
-          <div class="ideas-grid">
-            
-            <div class="idea-card" onclick="window.location.href='idea.html?id=mm-channel-breakout'">
-              <div class="idea-chart-mock">
-                <!-- TradingView overlay logo badge -->
-                <div class="idea-badge-logo">
-                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
-                    <line x1="17" y1="21" x2="22" y2="7" />
-                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
-                  </svg>
-                </div>
-                <!-- Circular asset icon and trend indicator -->
-                <div class="idea-badge-asset">
-                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
-                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
-                </div>
-                <canvas id="mock-chart-idea-1" width="310" height="150"></canvas>
-              </div>
-              <h3 class="idea-title">M&M Strong Bullish Expansion with Channel Breakout</h3>
-              <p class="idea-summary">Mahindra & Mahindra: Daily Technical Snapshot - Strong Bullish Expansion 🚀 STWP Technical Analysis 📝 MARKET...</p>
-              <div class="idea-footer">
-                <div class="idea-author-block">
-                  <span class="idea-author">by simpletradewithpatience</span>
-                  <span class="idea-date">21 hours ago</span>
-                </div>
-                <div class="idea-stats">
-                  <span><i data-lucide="message-square"></i> 2</span>
-                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 8</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="idea-card" onclick="window.location.href='idea.html?id=tatatech-stage2'">
-              <div class="idea-chart-mock">
-                <div class="idea-badge-logo">
-                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
-                    <line x1="17" y1="21" x2="22" y2="7" />
-                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
-                  </svg>
-                </div>
-                <div class="idea-badge-asset">
-                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
-                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
-                </div>
-                <canvas id="mock-chart-idea-2" width="310" height="150"></canvas>
-              </div>
-              <h3 class="idea-title">#TATATECH - Stage 2 BO in WTF</h3>
-              <p class="idea-summary">Script: TATATECH ⚡ Key highlights: 💡 Stage 2 BO in WTF ✅ Volume spike during Breakout 📈 RS Line making 52WH 📈 MACD Crossover If you have any doubts about the setup,...</p>
-              <div class="idea-footer">
-                <div class="idea-author-block">
-                  <span class="idea-author">by MMT_MakeMoneyTrading</span>
-                  <span class="idea-date">Aug 9</span>
-                </div>
-                <div class="idea-stats">
-                  <span><i data-lucide="message-square"></i> 3</span>
-                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 8</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="idea-card" onclick="window.location.href='idea.html?id=eternal-golden-cross'">
-              <div class="idea-chart-mock">
-                <div class="idea-badge-logo">
-                  <svg viewBox="0 0 28 28" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 14c2.5-4 4.5 4 7 0 2.5-4 4.5 4 7 0" />
-                    <line x1="17" y1="21" x2="22" y2="7" />
-                    <circle cx="25" cy="7" r="1.5" fill="currentColor" stroke="none" />
-                  </svg>
-                </div>
-                <div class="idea-badge-asset">
-                  <div class="asset-circle-icon"><i data-lucide="coins" style="width: 12px; height: 12px;"></i></div>
-                  <div class="trend-direction-icon up"><i data-lucide="arrow-up-right" style="width: 8px; height: 8px;"></i></div>
-                </div>
-                <canvas id="mock-chart-idea-3" width="310" height="150"></canvas>
-              </div>
-              <h3 class="idea-title">ETERNAL - Swing Trade Setup-Golden Cross Over</h3>
-              <p class="idea-summary">ETERNAL: CMP: ₹315 Eternal is showing a constructive weekly Elliott Wave structure, with ₹212-213 as a major structural low. The current move suggests the beginning of a fresh...</p>
-              <div class="idea-footer">
-                <div class="idea-author-block">
-                  <span class="idea-author">by DrPrashantVerma</span>
-                  <span class="idea-date">Aug 8</span>
-                </div>
-                <div class="idea-stats">
-                  <span><i data-lucide="message-square"></i> 5</span>
-                  <span class="idea-stat-rocket"><i data-lucide="rocket"></i> 50</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <!-- Horizontal scroll slider chevron control -->
-          <div class="ideas-scroll-arrow-right">
-            <i data-lucide="chevron-right"></i>
-          </div>
+          <div class="ideas-grid" id="community-ideas-grid" aria-live="polite"></div>
         </div>
       </section>
 
+      <!-- COMMUNITY NEWS SECTION -->
+      <section class="community-news-section" aria-labelledby="community-news-title">
+        <div class="community-news-header">
+          <div>
+            <p class="community-news-eyebrow">MARKET COVERAGE</p>
+            <h2 class="section-title" id="community-news-title">Community news</h2>
+          </div>
+          <div class="community-news-filters" role="group" aria-label="Filter community news by category">
+            <button class="community-news-filter active" type="button" data-news-filter="all" aria-pressed="true">All News</button>
+            <button class="community-news-filter" type="button" data-news-filter="cryptocurrency" aria-pressed="false">Crypto</button>
+            <button class="community-news-filter" type="button" data-news-filter="stock_market" aria-pressed="false">Stock Market</button>
+            <button class="community-news-filter" type="button" data-news-filter="economy" aria-pressed="false">Economy</button>
+            <button class="community-news-filter" type="button" data-news-filter="regulation" aria-pressed="false">Regulation</button>
+          </div>
+        </div>
+        <p class="community-news-disclosure">News from GNews. The free plan may provide articles with up to a 12-hour delay. Publication time is supplied by the publisher; retrieval time is shown separately.</p>
+        <p class="community-news-status" id="community-news-status" role="status" aria-live="polite">Loading community news…</p>
+        <div class="community-news-grid" id="community-news-grid" aria-live="polite"></div>
+      </section>
 
       <!-- FOOTER -->
       <footer class="app-footer">
@@ -1342,5 +1273,7 @@
   <script src="js/router.js"></script>
   <script src="js/main.js"></script>
   <script src="js/market-summary.js"></script>
+  <script src="js/communityIdeas.js"></script>
+  <script src="js/communityNews.js"></script>
 </body>
 </html>
