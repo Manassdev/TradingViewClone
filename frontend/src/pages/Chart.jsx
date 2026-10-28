@@ -64,7 +64,7 @@ function WatchlistPanel({ selected, onSelect }) {
   async function load() {
     if (!user) { setItems(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT'].map((symbol) => ({ symbol, displayName: symbol, _id: symbol }))); return; }
     setLoading(true); setError('');
-    try { const response = await api.watchlist(); setItems(response.data || []); } catch (requestError) { setError(requestError.message); }
+    try { const response = await api.watchlist(); setItems(response.data?.items || []); } catch (requestError) { setError(requestError.message); }
     finally { setLoading(false); }
   }
   useEffect(() => { load(); }, [user]);

@@ -87,13 +87,20 @@ export const getMarketStatus = (req, res) => {
       },
       stocks: {
         type: 'STATIC_MOCK',
-        note: 'Equities and Indian stock details are demo datasets',
+        note: 'Generic international stock quotes are not configured',
         supported: false
       },
       indices: {
         type: 'STATIC_MOCK',
-        note: 'Global index prices are simulated',
+        note: 'Non-Indian global index quotes are not configured',
         supported: false
+      },
+      india: {
+        type: 'PROVIDER_EOD',
+        provider: 'Twelve Data',
+        delay: 'End-of-day (EOD)',
+        supported: true,
+        note: 'NSE/BSE access requires an eligible plan; index availability is checked per symbol and entitlement.'
       }
     }
   });

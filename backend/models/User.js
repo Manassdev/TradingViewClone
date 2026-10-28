@@ -1,7 +1,23 @@
 import mongoose from 'mongoose';
 
+const preferencesSchema = new mongoose.Schema({
+  theme: { type: String, enum: ['dark', 'light', 'system'], default: 'dark' },
+  locale: { type: String, trim: true, maxlength: 20, default: 'en' },
+  timezone: { type: String, trim: true, maxlength: 60, default: 'Asia/Kolkata' },
+  notifications: {
+    priceAlerts: { type: Boolean, default: true },
+    community: { type: Boolean, default: true },
+    news: { type: Boolean, default: false }
+  }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   name: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  displayName: {
     type: String,
     trim: true,
     maxlength: 100
@@ -35,21 +51,17 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
+    maxlength: 500,
     default: 'user'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  preferences: { type: preferencesSchema, default: () => ({}) },
+  watchlistsInitialized: { type: Boolean, default: false, select: false }
 }, {
-  timestamps: false,
+  timestamps: true,
   collection: 'users' // explicitly bind to existing collection
 });
 
-// Virtual helper to always provide a valid display name
-userSchema.virtual('displayName').get(function() {
-  return this.name || this.username || this.email.split('@')[0];
-});
+userSchema.index({ username: 1 }, { unique: true, collation: { locale: 'en', strength: 2 }, name: 'uniq_username_case_insensitive' });
 
 const User = mongoose.model('User', userSchema);
 export default User;

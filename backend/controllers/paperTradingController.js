@@ -1,5 +1,7 @@
 import {
   executePaperOrder,
+  placePaperLimitOrder,
+  cancelPaperOrder,
   getPaperPerformance,
   getPaperPortfolio,
   PaperTradingError,
@@ -19,10 +21,18 @@ export const getPortfolio = async (req, res) => {
 
 export const postOrder = async (req, res) => {
   try {
-    const { symbol, side, quantity, amountUsdt } = req.body || {};
-    const result = await executePaperOrder(req.user.id, { symbol, side, quantity, amountUsdt, orderId: req.get('Idempotency-Key') });
-    return res.status(result.duplicate ? 200 : 201).json({ success: true, duplicate: result.duplicate, data: result.portfolio, trade: result.trade || null });
+    const { symbol, side, quantity, amountUsdt, orderType, limitPrice } = req.body || {};
+    const order = { symbol, side, quantity, amountUsdt, orderType, limitPrice, orderId: req.get('Idempotency-Key') };
+    const result = order.orderType === 'limit'
+      ? await placePaperLimitOrder(req.user.id, order)
+      : await executePaperOrder(req.user.id, order);
+    return res.status(result.duplicate ? 200 : 201).json({ success: true, duplicate: result.duplicate, pending: result.pending || result.order?.status === 'pending', data: result.portfolio, trade: result.trade || null, order: result.order || null });
   } catch (error) { return handleError(res, error); }
+};
+
+export const deleteOrder = async (req, res) => {
+  try { return res.json({ success: true, data: await cancelPaperOrder(req.user.id, req.params.orderId) }); }
+  catch (error) { return handleError(res, error); }
 };
 
 export const postReset = async (req, res) => {

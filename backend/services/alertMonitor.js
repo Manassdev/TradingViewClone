@@ -1,5 +1,7 @@
 import Alert from '../models/Alert.js';
 import Notification from '../models/Notification.js';
+import { getIndiaInstruments } from './indiaRegistry.js';
+import { getIndiaMarketStatus, getIndiaQuotes } from './indiaDataService.js';
 
 const DEFAULT_BINANCE_API_BASE = 'https://api.binance.com';
 const DEFAULT_INTERVAL_MS = 30_000;
@@ -35,9 +37,12 @@ const fetchBinancePrices = async (symbols) => {
 };
 
 const assetTypeFor = (alert) => alert.assetType || (alert.symbol?.endsWith('USDT') ? 'crypto' : 'stock');
+const isIndiaAsset = (alert) => ['india_stock', 'india_index'].includes(assetTypeFor(alert));
 
 const saveNotificationOnce = async (alert, price, assetType) => {
-  const formattedPrice = new Intl.NumberFormat('en-US', { maximumFractionDigits: 8 }).format(price);
+  const formattedPrice = ['india_stock', 'india_index'].includes(assetType)
+    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(price)
+    : new Intl.NumberFormat('en-US', { maximumFractionDigits: 8 }).format(price);
   await Notification.updateOne(
     { alertId: alert._id, triggerCount: alert.triggerCount || 1 },
     {
@@ -47,8 +52,10 @@ const saveNotificationOnce = async (alert, price, assetType) => {
         triggerCount: alert.triggerCount || 1,
         type: 'price_alert',
         title: 'Price Alert Triggered',
-        message: `${alert.symbol} reached ${formattedPrice}`,
+        message: `${alert.exchange && alert.exchange !== 'BINANCE' ? `${alert.exchange}:` : ''}${alert.symbol} reached ${formattedPrice}`,
         symbol: alert.symbol,
+        exchange: alert.exchange,
+        currency: ['india_stock', 'india_index'].includes(assetType) ? 'INR' : undefined,
         assetType,
         price,
         isRead: false,
@@ -75,26 +82,50 @@ const triggerIfMatched = async (alert, price, previous) => {
 };
 
 /** One polling pass; accepts an injectable price source for deterministic tests. */
-export const runAlertMonitorOnce = async (priceProvider = fetchBinancePrices, testFilter = {}) => {
+export const runAlertMonitorOnce = async (priceProvider = fetchBinancePrices, testFilter = {}, indiaQuoteProvider = getIndiaQuotes) => {
   const active = await Alert.find({ ...testFilter, isActive: true, isTriggered: { $ne: true } }).lean();
   const cryptoSymbols = [...new Set(active.filter((alert) => assetTypeFor(alert) === 'crypto').map((alert) => alert.symbol))];
+  const indiaAlerts = active.filter((alert) => isIndiaAsset(alert) && getIndiaMarketStatus(alert.exchange).state === 'closed');
+  const indiaInstrumentKeys = [...new Set(indiaAlerts.map((alert) => `${alert.exchange}:${alert.symbol}`))];
   let prices = new Map();
   if (cryptoSymbols.length) prices = await priceProvider(cryptoSymbols);
+  const indiaQuotes = new Map();
+  if (indiaInstrumentKeys.length) {
+    const instruments = indiaInstrumentKeys.map((key) => {
+      const [exchange, symbol] = key.split(':');
+      return getIndiaInstruments({ exchange }).find((item) => item.symbol === symbol);
+    }).filter(Boolean);
+    try {
+      const result = await indiaQuoteProvider(instruments);
+      for (const quote of result.data || []) indiaQuotes.set(`${quote.exchange}:${quote.symbol}`, quote);
+    } catch (error) {
+      console.warn(`[AlertMonitor] Indian EOD quote check skipped: ${error.message}`);
+    }
+  }
 
   let triggeredCount = 0;
   for (const alert of active) {
     const assetType = assetTypeFor(alert);
-    if (assetType !== 'crypto') continue; // No live stock provider is configured.
-    const price = Number(prices.get(alert.symbol));
+    if (assetType === 'stock') continue; // Legacy generic stocks have no configured quote provider.
+    const isIndia = isIndiaAsset(alert);
+    const quote = isIndia ? indiaQuotes.get(`${alert.exchange}:${alert.symbol}`) : null;
+    if (isIndia && (!quote || quote.isStale || !Number.isFinite(Date.parse(quote.updatedAt)))) continue;
+    if (isIndia && getIndiaMarketStatus(alert.exchange).state !== 'closed') continue;
+    const price = isIndia ? Number(quote.price) : Number(prices.get(alert.symbol));
     if (!Number.isFinite(price) || price <= 0) continue;
-    const key = `${alert.provider || 'binance'}:${alert.symbol}`;
-    const previous = previousPrices.get(key);
+    if (isIndia && (Date.parse(quote.updatedAt) <= Date.parse(alert.createdAt) || (alert.lastProviderUpdatedAt && Date.parse(quote.updatedAt) <= Date.parse(alert.lastProviderUpdatedAt)))) continue;
+    const key = `${alert.provider || 'binance'}:${alert.exchange || ''}:${alert.symbol}`;
+    const previous = isIndia ? Number(alert.lastEvaluatedPrice) : previousPrices.get(key);
     try {
+      await Alert.updateOne(
+        { _id: alert._id, isActive: true },
+        { $set: { lastEvaluatedPrice: price, lastEvaluatedAt: new Date(), ...(isIndia ? { lastProviderUpdatedAt: new Date(quote.updatedAt) } : {}) } }
+      );
       if (await triggerIfMatched(alert, price, previous)) triggeredCount += 1;
     } catch (error) {
       console.error(`[AlertMonitor] Could not process alert ${alert._id}:`, error.message);
     }
-    previousPrices.set(key, price);
+    if (!isIndia) previousPrices.set(key, price);
   }
 
   // Reconcile a crash between claiming an alert and writing its notification.
@@ -106,7 +137,7 @@ export const runAlertMonitorOnce = async (priceProvider = fetchBinancePrices, te
       console.error(`[AlertMonitor] Could not recover notification for alert ${alert._id}:`, error.message);
     }
   }
-  return { checked: active.length, triggered: triggeredCount, cryptoSymbols: cryptoSymbols.length };
+  return { checked: active.length, triggered: triggeredCount, cryptoSymbols: cryptoSymbols.length, indiaSymbols: indiaInstrumentKeys.length };
 };
 
 export const startAlertMonitor = () => {

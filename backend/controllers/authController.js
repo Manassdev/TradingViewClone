@@ -1,7 +1,7 @@
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import Watchlist from '../models/Watchlist.js';
+import NamedWatchlist from '../models/NamedWatchlist.js';
 import { getJwtSecret } from '../config/env.js';
 
 const generateToken = (user) => {
@@ -25,7 +25,7 @@ export const registerUser = async (req, res, next) => {
     const { name, username, email, password } = req.body || {};
     const suppliedName = typeof name === 'string' && name.trim() ? name : username;
     const displayName = (typeof suppliedName === 'string' ? suppliedName : '').trim();
-    const cleanUsername = (typeof username === 'string' && username.trim() ? username : displayName).trim();
+    const cleanUsername = (typeof username === 'string' && username.trim() ? username : displayName).trim().replace(/\s+/g, '_');
 
     if (!displayName || !cleanUsername || typeof email !== 'string' || typeof password !== 'string') {
       return res.status(400).json({
@@ -40,11 +40,14 @@ export const registerUser = async (req, res, next) => {
         message: 'Username must be between 3 and 30 characters long.'
       });
     }
+    if (!/^[A-Za-z0-9_.-]+$/.test(cleanUsername)) {
+      return res.status(400).json({ success: false, message: 'Username may contain letters, numbers, periods, underscores, and hyphens.' });
+    }
 
-    if (password.length < 6) {
+    if (password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long'
+        message: 'Password must be at least 8 characters and no more than 72 UTF-8 bytes.'
       });
     }
 
@@ -74,6 +77,7 @@ export const registerUser = async (req, res, next) => {
 
     const newUser = new User({
       name: displayName,
+      displayName,
       username: cleanUsername,
       email: cleanEmail,
       passwordHash,
@@ -83,13 +87,19 @@ export const registerUser = async (req, res, next) => {
     const savedUser = await newUser.save();
 
     // Create an initial default watchlist in the database
-    const defaultWatchlist = new Watchlist({
-      user: savedUser._id,
+    const defaultWatchlist = new NamedWatchlist({
+      owner: savedUser._id,
       name: 'My Watchlist',
-      symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'],
-      favorites: []
+      items: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT'].map((symbol) => ({
+        symbol,
+        assetType: 'crypto',
+        exchange: 'BINANCE',
+        provider: 'binance',
+        displayName: symbol
+      }))
     });
     await defaultWatchlist.save();
+    await User.updateOne({ _id: savedUser._id }, { $set: { watchlistsInitialized: true } });
 
     const token = generateToken(savedUser);
 
@@ -99,12 +109,15 @@ export const registerUser = async (req, res, next) => {
       token,
       user: {
         id: savedUser._id,
-        name: savedUser.name || savedUser.username,
+        name: savedUser.displayName || savedUser.name || savedUser.username,
         email: savedUser.email,
         avatar: savedUser.avatar
       }
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ success: false, message: 'A user with this email or username already exists.' });
+    }
     next(err);
   }
 };
@@ -164,7 +177,7 @@ export const loginUser = async (req, res, next) => {
       token,
       user: {
         id: user._id,
-        name: user.name || user.username || 'User',
+        name: user.displayName || user.name || user.username || 'User',
         email: user.email,
         avatar: user.avatar || 'user'
       }
@@ -203,7 +216,7 @@ export const getMe = async (req, res, next) => {
       success: true,
       user: {
         id: user._id,
-        name: user.name || user.username,
+        name: user.displayName || user.name || user.username,
         email: user.email,
         avatar: user.avatar,
         createdAt: user.createdAt

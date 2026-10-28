@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   executePaperOrder,
+  placePaperLimitOrder,
+  cancelPaperOrder,
+  evaluatePendingPaperOrders,
   getPaperPerformance,
   getPaperPortfolio,
   PaperTradingError,
@@ -70,6 +73,10 @@ test.beforeEach(() => MemoryPortfolio.reset());
 
 test('validates symbol, side, quantity precision, and idempotency key', () => {
   assert.doesNotThrow(() => validatePaperOrder(order()));
+  assert.doesNotThrow(() => validatePaperOrder(order({ orderType: 'limit', limitPrice: 100 })));
+  assert.throws(() => validatePaperOrder(order({ orderType: 'limit', limitPrice: 0 })), PaperTradingError);
+  assert.throws(() => validatePaperOrder(order({ orderType: 'limit', limitPrice: 1.123456789 })), PaperTradingError);
+  assert.throws(() => validatePaperOrder(order({ orderType: 'stop', limitPrice: 100 })), PaperTradingError);
   assert.throws(() => validatePaperOrder(order({ symbol: 'BTCUSD' })), PaperTradingError);
   assert.throws(() => validatePaperOrder(order({ side: 'limit' })), PaperTradingError);
   assert.throws(() => validatePaperOrder(order({ quantity: 0 })), PaperTradingError);
@@ -121,6 +128,23 @@ test('executes market buys and sells using the server price and tracks realized 
   assert.equal(sold.portfolio.unrealizedPnl, 120);
   assert.equal(sold.portfolio.totalPnl, 200);
   assert.equal(sold.portfolio.totalReturnPercent, 0.2);
+});
+
+test('position snapshot exposes market value, unrealized return, and realized P/L with the shared average-cost basis', async () => {
+  await executePaperOrder('pnl-position', order({ quantity: 2 }), { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  await executePaperOrder('pnl-position', order({ side: 'sell', quantity: 1, orderId: 'a09ac07a-49cb-4a6d-b8e9-e53ce35a8fa1' }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 110 })
+  });
+  const account = await getPaperPortfolio('pnl-position', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 120 }) });
+  assert.equal(account.holdings[0].assetType, 'crypto');
+  assert.equal(account.holdings[0].direction, 'long');
+  assert.equal(account.holdings[0].availableQuantity, 1);
+  assert.equal(account.holdings[0].marketValue, 120);
+  assert.equal(account.holdings[0].unrealizedPnl, 20);
+  assert.equal(account.holdings[0].unrealizedPnlPercent, 20);
+  assert.equal(account.holdings[0].realizedPnl, 10);
+  assert.equal(account.trades[1].entryPrice, 100);
+  assert.ok(account.trades[1].entryAt);
 });
 
 test('buys by USDT amount using the server quote and tracks weighted average entry', async () => {
@@ -220,6 +244,10 @@ test('resets only the signed-in user portfolio and keeps replay keys; performanc
   assert.equal(reset.trades.length, 0);
   assert.equal(MemoryPortfolio.rows.get('user-a').processedOrderIds.includes(orderId), true);
   assert.equal(MemoryPortfolio.rows.get('user-b').holdings[0].symbol, 'ETHUSDT');
+  const replayAfterReset = await executePaperOrder('user-a', order({ orderId }), { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  assert.equal(replayAfterReset.duplicate, true);
+  assert.equal(replayAfterReset.portfolio.cash, 100_000);
+  assert.equal(replayAfterReset.portfolio.trades.length, 0);
 
   const history = await getPaperPerformance('user-b', { model: MemoryPortfolio, getPrices: makePriceReader() });
   assert.equal(history.points[1].value, 100_000);
@@ -430,6 +458,9 @@ test('holding sell shortcut builds an order for each asset using its full positi
   assert.deepEqual(makeFullHoldingSellOrder({ symbol: 'ethusdt', quantity: 2.5 }), {
     symbol: 'ETHUSDT', side: 'sell', quantity: 2.5
   });
+  assert.deepEqual(makeFullHoldingSellOrder({ symbol: 'BTCUSDT', quantity: 1, availableQuantity: 0.25 }), {
+    symbol: 'BTCUSDT', side: 'sell', quantity: 0.25
+  });
   assert.equal(makeFullHoldingSellOrder({ symbol: 'BTCUSDT', quantity: 0 }), null);
   assert.equal(makeFullHoldingSellOrder({ symbol: 'BTCUSDT', quantity: -1 }), null);
   assert.equal(makeFullHoldingSellOrder({ symbol: 'BTCUSD', quantity: 1 }), null);
@@ -535,6 +566,103 @@ test('Paper Trading table wires one accessible full-sell action per holding and 
   assert.match(page, /className=\{side === 'sell' \? 'sell-active' : ''\}/);
   assert.match(page, /onClick=\{\(\) => changeAmountMode\('quantity'\)\}/);
   assert.match(page, /getPaperOrderExecutionQuantity/);
+});
+
+test('chart workspace renders backend-confirmed paper entry and pending limit price lines', async () => {
+  const page = await readFile(new URL('../../frontend/src/pages/ChartWorkspace.jsx', import.meta.url), 'utf8');
+  assert.match(page, /paperPortfolio\?\.holdings\?\.find/);
+  assert.match(page, /addPriceLine\(holding\.averageEntryPrice, '#f6c85f', 'Paper entry'\)/);
+  assert.match(page, /order\.status === 'pending'/);
+  assert.match(page, /addPriceLine\(order\.limitPrice, order\.side === 'buy' \? '#34c7a1' : '#ff6c78', 'Pending ' \+ order\.side \+ ' limit'\)/);
+});
+
+test('limit orders stay pending on submission and fill only after a fresh server quote crosses the limit', async () => {
+  const orderData = order({ orderType: 'limit', limitPrice: 100, amountUsdt: 100, quantity: undefined });
+  const placed = await placePaperLimitOrder('limit-buyer', orderData, { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 90 }) });
+  assert.equal(placed.order.status, 'pending');
+  assert.equal(placed.trade, undefined);
+  assert.equal(placed.portfolio.cash, 100_000);
+  assert.equal(placed.portfolio.availableCash, 99_900);
+  assert.equal(placed.portfolio.orders.length, 1);
+  await assert.rejects(() => executePaperOrder('limit-buyer', order({ quantity: undefined, amountUsdt: 99_901, orderId: '14fca661-26d0-43b4-b599-78bb7f154fa5' }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 90 })
+  }), /not enough paper cash/i);
+
+  await evaluatePendingPaperOrders('limit-buyer', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 101 }) });
+  assert.equal(MemoryPortfolio.rows.get('limit-buyer').orders[0].status, 'pending', 'buy limit remains pending above its price');
+  await Promise.all([
+    evaluatePendingPaperOrders('limit-buyer', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 99 }) }),
+    evaluatePendingPaperOrders('limit-buyer', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 99 }) })
+  ]);
+  const row = MemoryPortfolio.rows.get('limit-buyer');
+  assert.equal(row.orders[0].status, 'filled');
+  assert.equal(row.orders[0].executionPrice, 100, 'limit fill is conservatively recorded at the limit');
+  assert.equal(row.trades.length, 1);
+  assert.equal(row.trades[0].executionPrice, 100);
+  assert.equal(Number((100_000 - row.cash).toFixed(8)), row.trades[0].notional);
+  await evaluatePendingPaperOrders('limit-buyer', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 90 }) });
+  assert.equal(MemoryPortfolio.rows.get('limit-buyer').trades.length, 1, 'repeat evaluation cannot double fill');
+});
+
+test('pending limit orders reserve cash and sell quantity until cancellation or fill', async () => {
+  await assert.rejects(() => placePaperLimitOrder('limit-cash', order({ orderType: 'limit', limitPrice: 100, quantity: 1_000.01 }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 })
+  }), /not enough paper cash/i);
+  await executePaperOrder('limit-seller', order({ quantity: 2 }), { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  const sell = await placePaperLimitOrder('limit-seller', order({ orderType: 'limit', side: 'sell', quantity: 1, limitPrice: 110, orderId: '3f761992-4814-4588-b8c9-df00f11eaf98' }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 })
+  });
+  assert.equal(sell.portfolio.holdings[0].availableQuantity, 1);
+  await assert.rejects(() => executePaperOrder('limit-seller', order({ side: 'sell', quantity: 1.1, orderId: '3d8dd582-1885-4e3d-b6d0-38755ad0fbd2' }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 })
+  }), /not enough of this asset/i);
+  const cancelled = await cancelPaperOrder('limit-seller', sell.order.orderId, { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  assert.equal(cancelled.orders[0].status, 'cancelled');
+  assert.equal(cancelled.holdings[0].availableQuantity, 2);
+  await assert.rejects(() => cancelPaperOrder('other-user', sell.order.orderId, { model: MemoryPortfolio }), /not found/i);
+  await assert.rejects(() => cancelPaperOrder('limit-seller', sell.order.orderId, { model: MemoryPortfolio }), /only pending/i);
+});
+
+test('a crossed sell limit realizes P/L at its limit price and only once', async () => {
+  await executePaperOrder('limit-close', order({ quantity: 2 }), { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  const placed = await placePaperLimitOrder('limit-close', order({ orderType: 'limit', side: 'sell', quantity: 1, limitPrice: 110, orderId: '3f761992-4814-4588-b8c9-df00f11eaf98' }), {
+    model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 })
+  });
+  await evaluatePendingPaperOrders('limit-close', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 109 }) });
+  assert.equal(MemoryPortfolio.rows.get('limit-close').orders[0].status, 'pending');
+  const completed = await evaluatePendingPaperOrders('limit-close', { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 111 }) });
+  assert.equal(completed.trades.length, 2);
+  assert.equal(completed.trades[1].executionPrice, 110);
+  assert.equal(completed.trades[1].realizedPnl, 10);
+  assert.equal(completed.holdings[0].quantity, 1);
+  assert.equal(placed.order.status, 'pending');
+});
+
+test('valuation outages preserve account access while marking held prices and equity unavailable', async () => {
+  await executePaperOrder('valuation-outage', order({ quantity: 1 }), { model: MemoryPortfolio, getPrices: makePriceReader({ BTCUSDT: 100 }) });
+  const account = await getPaperPortfolio('valuation-outage', { model: MemoryPortfolio, getPrices: async () => { throw new Error('feed unavailable'); } });
+  assert.equal(account.cash, 99_900);
+  assert.equal(account.marketDataStatus, 'unavailable');
+  assert.equal(account.holdings[0].lastPrice, null);
+  assert.equal(account.holdings[0].marketValue, null);
+  assert.equal(account.equity, null);
+  assert.equal(account.unrealizedPnl, null);
+});
+
+test('configured initial balance is persisted per new account and reset restores that account value', async () => {
+  const previous = process.env.PAPER_INITIAL_BALANCE;
+  process.env.PAPER_INITIAL_BALANCE = '25000.50';
+  try {
+    const account = await getPaperPortfolio('configured-account', { model: MemoryPortfolio, getPrices: makePriceReader() });
+    assert.equal(account.initialBalance, 25_000.5);
+    assert.equal(account.cash, 25_000.5);
+    const reset = await resetPaperPortfolio('configured-account', { model: MemoryPortfolio });
+    assert.equal(reset.cash, 25_000.5);
+    assert.equal(reset.initialBalance, 25_000.5);
+  } finally {
+    if (previous === undefined) delete process.env.PAPER_INITIAL_BALANCE;
+    else process.env.PAPER_INITIAL_BALANCE = previous;
+  }
 });
 
 test('users remain isolated and selling the full position removes the holding', async () => {

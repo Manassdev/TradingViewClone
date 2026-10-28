@@ -95,15 +95,46 @@ function MarketSummary() {
 export default function Home() {
   return <main className="home-page view-panel">
     <section className="hero-section" aria-labelledby="home-hero-title">
+      <div className="hero-earth-scene" aria-hidden="true">
+        <div className="hero-earth-image" />
+        <svg className="hero-market-trails" viewBox="0 0 1920 1032" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="trail-magenta" x1="0" x2="1">
+              <stop offset="0" stopColor="#ff4bc2" stopOpacity="0" />
+              <stop offset=".45" stopColor="#ff4bc2" stopOpacity=".9" />
+              <stop offset="1" stopColor="#a64dff" stopOpacity=".18" />
+            </linearGradient>
+            <linearGradient id="trail-violet" x1="0" x2="1">
+              <stop offset="0" stopColor="#7d5cff" stopOpacity=".12" />
+              <stop offset=".52" stopColor="#b46cff" stopOpacity=".88" />
+              <stop offset="1" stopColor="#54a8ff" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="trail-blue" x1="0" x2="1">
+              <stop offset="0" stopColor="#36a9ff" stopOpacity="0" />
+              <stop offset=".5" stopColor="#52d9ff" stopOpacity=".88" />
+              <stop offset="1" stopColor="#5b7cff" stopOpacity=".1" />
+            </linearGradient>
+          </defs>
+          <path id="trail-left" className="hero-trail hero-trail-magenta" d="M 80 900 C 235 880 265 814 403 826 S 594 904 745 805 S 944 772 1080 828" />
+          <path id="trail-center" className="hero-trail hero-trail-violet" d="M 470 953 C 600 884 677 896 807 854 S 1018 792 1157 830 S 1335 902 1470 819" />
+          <path id="trail-right" className="hero-trail hero-trail-blue" d="M 1015 922 C 1160 868 1226 902 1350 850 S 1542 785 1664 842 S 1815 869 1900 806" />
+          <circle className="hero-trail-dot dot-magenta" r="4"><animateMotion dur="9s" repeatCount="indefinite"><mpath href="#trail-left" /></animateMotion></circle>
+          <circle className="hero-trail-dot dot-violet" r="4"><animateMotion dur="11s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#trail-center" /></animateMotion></circle>
+          <circle className="hero-trail-dot dot-blue" r="4"><animateMotion dur="10s" repeatCount="indefinite"><mpath href="#trail-right" /></animateMotion></circle>
+        </svg>
+      </div>
       <h1 className="hero-title" id="home-hero-title">Where the world does markets</h1>
-      <p className="hero-subtitle">Join 100 million traders and investors taking the future into their own hands.</p>
+      <p className="hero-subtitle">Join millions of traders and investors taking the future into their own hands.</p>
       <div className="hero-cta-group">
-        <Link to="/pricing" className="hero-cta-btn">Get started for free</Link>
+        <Link to="/signup" className="hero-cta-btn">Get started for free</Link>
         <span className="hero-cta-tagline">$0 forever, no credit card needed</span>
       </div>
-      <a className="hero-scroll-indicator" href="#section-two" aria-label="Scroll to market showcase"><ChevronDown /></a>
+      <a className="hero-scroll-indicator" href="#section-two" aria-label="Scroll to market showcase" onClick={(event) => {
+        event.preventDefault();
+        document.getElementById('section-two')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      }}><ChevronDown /></a>
     </section>
-    <section id="section-two"><h2>Where the world does markets</h2><p>Join traders and investors taking the future into their own hands.</p><div className="section-two-preview-wrapper"><div className="section-two-glow-border"><img src="/assets/images/platform-preview.jpg" alt="TradingView charting platform preview" className="section-two-preview-img" /></div></div><div className="section-two-cta-row"><Link to="/features" className="section-two-explore-btn">Explore features</Link></div></section>
+    <section id="section-two"><h2>Where the world does markets</h2><p>Join traders and investors taking the future into their own hands.</p><div className="section-two-preview-wrapper"><div className="section-two-glow-border"><img src="/assets/images/platform-preview.jpg" alt="TradingView charting platform preview" className="section-two-preview-img" /></div></div><div className="section-two-cta-row"><Link to="/features" className="section-two-explore-btn">Explore all features</Link></div></section>
     <MarketSummary />
     <CommunityIdeas />
     <CommunityNews />

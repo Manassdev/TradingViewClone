@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test tests/news.test.js tests/communityIdeas.test.js tests/paperTrading.test.js tests/chartData.test.js",
+    "test": "node --test tests/news.test.js tests/communityIdeas.test.js tests/paperTrading.test.js tests/chartData.test.js tests/authRateLimit.test.js tests/forex.test.js tests/india.test.js",
     "test:paper-integration": "node tests/paperTrading.mongo.integration.js"
   },
   "dependencies": {

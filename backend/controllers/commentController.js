@@ -4,6 +4,7 @@ import User from '../models/User.js';
 
 const MAX_COMMENT_LENGTH = 2000;
 const isStableIdeaId = (value) => typeof value === 'string' && /^[A-Za-z0-9_-]{1,120}$/.test(value);
+const userIdsFor = (userId) => [String(userId), ...(mongoose.Types.ObjectId.isValid(userId) ? [new mongoose.Types.ObjectId(userId)] : [])];
 
 const serializeComment = (comment) => ({
   _id: String(comment._id),
@@ -12,7 +13,9 @@ const serializeComment = (comment) => ({
   userName: comment.userName || 'Trader',
   content: comment.content,
   parentCommentId: comment.parentCommentId ? String(comment.parentCommentId) : null,
-  createdAt: comment.createdAt
+  createdAt: comment.createdAt,
+  updatedAt: comment.updatedAt,
+  editedAt: comment.editedAt || null
 });
 
 const sendCommentError = (res, operation, error) => {
@@ -62,8 +65,12 @@ export const createComment = async (req, res) => {
     if (parentCommentId && !mongoose.Types.ObjectId.isValid(parentCommentId)) {
       return res.status(400).json({ success: false, message: 'Parent comment ID is invalid.' });
     }
+    if (parentCommentId) {
+      const parent = await Comment.exists({ _id: parentCommentId, ideaId });
+      if (!parent) return res.status(400).json({ success: false, message: 'Parent comment must belong to this discussion.' });
+    }
 
-    const user = await User.findById(req.user.id).select('name username').lean();
+    const user = await User.findById(req.user.id).select('name displayName username').lean();
     if (!user) {
       return res.status(401).json({ success: false, message: 'Your account is no longer available. Please log in again.' });
     }
@@ -71,7 +78,7 @@ export const createComment = async (req, res) => {
     const created = await Comment.create({
       ideaId,
       userId: req.user.id,
-      userName: user.name || user.username || req.user.name || 'Trader',
+      userName: user.displayName || user.name || user.username || req.user.name || 'Trader',
       content: cleanContent,
       parentCommentId: parentCommentId || null,
       createdAt: new Date()
@@ -90,6 +97,31 @@ export const createComment = async (req, res) => {
   }
 };
 
+// @desc Edit a comment owned by the authenticated user
+// @route PATCH /api/comments/:id
+// @access Private
+export const editComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const content = req.body?.content;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Comment ID is invalid.' });
+    if (typeof content !== 'string' || !content.trim() || content.trim().length > MAX_COMMENT_LENGTH) {
+      return res.status(400).json({ success: false, message: `Comment must contain 1–${MAX_COMMENT_LENGTH} characters.` });
+    }
+
+    const updated = await Comment.findOneAndUpdate(
+      { _id: id, userId: { $in: userIdsFor(req.user.id) } },
+      { $set: { content: content.trim(), editedAt: new Date() } },
+      { new: true, runValidators: true }
+    ).lean();
+    if (!updated) return res.status(404).json({ success: false, message: 'Comment not found.' });
+    return res.json({ success: true, message: 'Comment updated.', data: serializeComment(updated) });
+  } catch (error) {
+    if (error.name === 'ValidationError') return res.status(400).json({ success: false, message: 'Comment data is invalid.' });
+    return sendCommentError(res, 'edit', error);
+  }
+};
+
 // @desc Delete a comment owned by the authenticated user
 // @route DELETE /api/comments/:id
 // @access Private
@@ -100,15 +132,8 @@ export const deleteComment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Comment ID is invalid.' });
     }
 
-    const comment = await Comment.findById(id).lean();
-    if (!comment) {
-      return res.status(404).json({ success: false, message: 'Comment not found.' });
-    }
-    if (String(comment.userId) !== String(req.user.id)) {
-      return res.status(403).json({ success: false, message: 'You can delete only your own comments.' });
-    }
-
-    await Comment.deleteOne({ _id: id, userId: comment.userId });
+    const comment = await Comment.findOneAndDelete({ _id: id, userId: { $in: userIdsFor(req.user.id) } }).lean();
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found.' });
     return res.json({ success: true, message: 'Comment deleted successfully.' });
   } catch (error) {
     return sendCommentError(res, 'delete', error);

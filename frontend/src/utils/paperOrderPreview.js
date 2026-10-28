@@ -15,6 +15,8 @@ export const getPaperOrderIdempotencyKey = (order, pendingRef, createId = () => 
   const signature = JSON.stringify({
     symbol: order?.symbol,
     side: order?.side,
+    orderType: order?.orderType || 'market',
+    limitPrice: order?.limitPrice ?? null,
     amountUsdt: order?.amountUsdt ?? null,
     quantity: order?.quantity ?? null
   });
@@ -35,6 +37,8 @@ export const clearPaperOrderIdempotencyKey = (order, pendingRef) => {
   const signature = JSON.stringify({
     symbol: order?.symbol,
     side: order?.side,
+    orderType: order?.orderType || 'market',
+    limitPrice: order?.limitPrice ?? null,
     amountUsdt: order?.amountUsdt ?? null,
     quantity: order?.quantity ?? null
   });

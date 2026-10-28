@@ -35,8 +35,10 @@ const notificationSchema = new mongoose.Schema({
   assetType: {
     type: String,
     required: true,
-    enum: ['stock', 'crypto']
+    enum: ['stock', 'crypto', 'india_stock', 'india_index']
   },
+  exchange: { type: String, uppercase: true, trim: true },
+  currency: { type: String, uppercase: true, trim: true, maxlength: 3 },
   price: {
     type: Number,
     required: true

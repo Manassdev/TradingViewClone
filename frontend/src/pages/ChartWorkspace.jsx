@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createChart, CrosshairMode } from 'lightweight-charts';
 import {
-  Activity, ArrowDownRight, ArrowUpRight, Bell, BellPlus, CandlestickChart, ChevronDown,
+  Activity, ArrowDown, ArrowDownRight, ArrowUp, ArrowUpRight, Bell, BellPlus, CandlestickChart, ChevronDown,
   Circle, CircleHelp, ExternalLink, History, Info, LineChart, Minus, MousePointer2,
   Pencil, Plus, Percent, RefreshCw, Search, SlidersHorizontal, Square, Star, Trash2, TrendingUp,
   Type, UserRound, Wallet, X
@@ -11,7 +11,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ErrorState, LoadingState, money } from '../components/Shared';
 import {
-  canSubmitPaperOrder, DEFAULT_PAPER_ORDER, getPaperOrderExecutionQuantity,
+  canSubmitPaperOrder, DEFAULT_PAPER_ORDER,
   clearPaperOrderIdempotencyKey, getPaperOrderIdempotencyKey, getPaperOrderInputMessage,
   getPaperOrderModeInput, getPaperOrderPreview, isPaperQuoteFresh
 } from '../utils/paperOrderPreview';
@@ -139,12 +139,13 @@ function DrawingShape({ drawing, chart, candleSeries, selected, selectable }) {
   return null;
 }
 
-function ChartSurface({ symbol, interval, chartType, indicators, activeTool, drawings, selectedDrawing, onAddDrawing, onSelectDrawing, onMarketQuote, textAnnotation, onInterval, onChartType, showIndicators, onToggleIndicators }) {
+function ChartSurface({ symbol, interval, chartType, indicators, activeTool, drawings, selectedDrawing, onAddDrawing, onSelectDrawing, onMarketQuote, paperPortfolio, textAnnotation, onInterval, onChartType, showIndicators, onToggleIndicators }) {
   const hostRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef({});
   const socketRef = useRef(null);
   const priceLineRef = useRef(null);
+  const paperPriceLinesRef = useRef([]);
   const candleDataRef = useRef([]);
   const overlayRef = useRef(null);
   const drawingPointerIdRef = useRef(null);
@@ -173,6 +174,35 @@ function ChartSurface({ symbol, interval, chartType, indicators, activeTool, dra
       priceLineRef.current = { series: activeSeries, line: priceLine };
     } catch { priceLineRef.current = null; }
   }, []);
+
+  useEffect(() => {
+    for (const item of paperPriceLinesRef.current) {
+      try { item.series.removePriceLine(item.line); } catch { /* A route change may have removed the chart first. */ }
+    }
+    paperPriceLinesRef.current = [];
+    const series = seriesRef.current.candle;
+    if (!series) return undefined;
+    const addPriceLine = (price, color, title) => {
+      if (!Number.isFinite(Number(price)) || Number(price) <= 0) return;
+      try {
+        const line = series.createPriceLine({ price: Number(price), color, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title });
+        paperPriceLinesRef.current.push({ series, line });
+      } catch { /* Ignore marker creation if the chart is being disposed. */ }
+    };
+    const holding = paperPortfolio?.holdings?.find((item) => item.symbol === symbol);
+    if (holding) addPriceLine(holding.averageEntryPrice, '#f6c85f', 'Paper entry');
+    for (const order of paperPortfolio?.orders || []) {
+      if (order.symbol === symbol && order.status === 'pending') {
+        addPriceLine(order.limitPrice, order.side === 'buy' ? '#34c7a1' : '#ff6c78', 'Pending ' + order.side + ' limit');
+      }
+    }
+    return () => {
+      for (const item of paperPriceLinesRef.current) {
+        try { item.series.removePriceLine(item.line); } catch { /* Ignore chart disposal races. */ }
+      }
+      paperPriceLinesRef.current = [];
+    };
+  }, [symbol, paperPortfolio]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -517,39 +547,102 @@ function SignInPrompt({ symbol, compact = false }) {
 function WatchlistTab({ selectedSymbol, onSelectSymbol }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [selectedListId, setSelectedListId] = useState('');
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const load = useCallback(async () => {
-    if (!user) { setItems(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT'].map((symbol) => ({ symbol, displayName: symbol, _id: symbol }))); return; }
+  const [indiaQuotes, setIndiaQuotes] = useState({});
+  const load = useCallback(async (preferredListId = selectedListId) => {
+    if (!user) { setLists([]); setItems(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT'].map((symbol) => ({ symbol, displayName: symbol, _id: symbol }))); return; }
     setBusy(true); setError('');
-    try { const response = await api.watchlist(); setItems(response.data?.items || []); }
+    try {
+      const response = await api.watchlists();
+      const nextLists = response.data || [];
+      setLists(nextLists);
+      const active = nextLists.find((list) => list._id === preferredListId) || nextLists[0];
+      setSelectedListId(active?._id || '');
+      setItems(active?.items || []);
+    }
     catch (requestError) { setError(requestError.message); }
     finally { setBusy(false); }
-  }, [user]);
+  }, [user, selectedListId]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const instruments = items
+      .filter((item) => item.assetType?.startsWith('india_') && item.exchange && item.symbol)
+      .map(({ exchange, symbol }) => ({ exchange, symbol }));
+    if (!instruments.length) { setIndiaQuotes({}); return undefined; }
+    const controller = new AbortController();
+    api.indiaQuotes(instruments, controller.signal)
+      .then((response) => {
+        if (controller.signal.aborted) return;
+        setIndiaQuotes(Object.fromEntries((response.data || []).map((quote) => [`${quote.exchange}:${quote.symbol}`, quote])));
+      })
+      .catch(() => { if (!controller.signal.aborted) setIndiaQuotes({}); });
+    return () => controller.abort();
+  }, [items]);
+  async function selectList(id) {
+    setSelectedListId(id);
+    setItems(lists.find((list) => list._id === id)?.items || []);
+  }
+  async function createList() {
+    const name = window.prompt('Name this watchlist');
+    if (name === null || !name.trim()) return;
+    setBusy(true); setError('');
+    try { const result = await api.createWatchlist(name.trim()); await load(result.data._id); }
+    catch (requestError) { setError(requestError.message); setBusy(false); }
+  }
+  async function renameList() {
+    const active = lists.find((list) => list._id === selectedListId);
+    if (!active) return;
+    const name = window.prompt('Rename watchlist', active.name);
+    if (name === null || !name.trim()) return;
+    setBusy(true); setError('');
+    try { await api.renameWatchlist(active._id, name.trim()); await load(); }
+    catch (requestError) { setError(requestError.message); setBusy(false); }
+  }
+  async function deleteList() {
+    const active = lists.find((list) => list._id === selectedListId);
+    if (!active || !window.confirm(`Delete “${active.name}” and its saved symbols?`)) return;
+    setBusy(true); setError('');
+    try { await api.deleteWatchlist(active._id); await load(''); }
+    catch (requestError) { setError(requestError.message); setBusy(false); }
+  }
   async function add(event) {
     event.preventDefault();
     const symbol = query.trim().toUpperCase().replace('/', '');
     if (!/^[A-Z0-9]{2,20}USDT$/.test(symbol)) { setError('Enter a valid Binance USDT pair, such as BTCUSDT.'); return; }
     if (!user) { setError('Sign in to save a personal watchlist.'); return; }
     setBusy(true); setError('');
-    try { await api.addToWatchlist({ symbol, assetType: 'crypto', exchange: 'BINANCE', provider: 'binance', displayName: symbol }); setQuery(''); await load(); }
+    try { await api.addToWatchlist({ listId: selectedListId, symbol, assetType: 'crypto', exchange: 'BINANCE', provider: 'binance', displayName: symbol }); setQuery(''); await load(); }
     catch (requestError) { setError(requestError.message); setBusy(false); }
   }
   async function remove(item) {
     if (!user) return;
     setBusy(true); setError('');
-    try { await api.removeFromWatchlist(item._id); await load(); }
+    try { await api.removeFromWatchlist(item._id, selectedListId); await load(); }
     catch (requestError) { setError(requestError.message); setBusy(false); }
   }
+  async function moveItem(item, direction) {
+    const index = items.findIndex((current) => current._id === item._id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return;
+    const next = [...items];
+    [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+    setBusy(true); setError('');
+    try { const result = await api.reorderWatchlist(selectedListId, next.map((current) => current._id)); setItems(result.data.items); setLists((existing) => existing.map((list) => list._id === selectedListId ? result.data : list)); }
+    catch (requestError) { setError(requestError.message); }
+    finally { setBusy(false); }
+  }
   return <div className="tv-tab-content">
-    <div className="tv-tab-subhead"><b>My watchlist</b><button type="button" className="tv-icon-button" onClick={load} title="Refresh watchlist" disabled={busy}><RefreshCw size={13} /></button></div>
+    <div className="tv-tab-subhead"><b>My watchlist</b><div className="tv-watchlist-actions"><button type="button" className="tv-icon-button" onClick={load} title="Refresh watchlist" disabled={busy}><RefreshCw size={13} /></button>{user && <button type="button" className="tv-icon-button" onClick={createList} title="Create watchlist" disabled={busy}><Plus size={13} /></button>}</div></div>
+    {user && lists.length > 0 && <div className="tv-watchlist-manage"><select value={selectedListId} onChange={(event) => selectList(event.target.value)} aria-label="Select watchlist">{lists.map((list) => <option key={list._id} value={list._id}>{list.name}</option>)}</select><button type="button" className="tv-icon-button" onClick={renameList} title="Rename watchlist" disabled={busy}><Pencil size={12} /></button><button type="button" className="tv-icon-button" onClick={deleteList} title="Delete watchlist" disabled={busy}><Trash2 size={12} /></button></div>}
     <form className="tv-watchlist-add" onSubmit={add}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Add BTCUSDT" aria-label="Add pair to watchlist" /><button type="submit" disabled={busy}><Plus size={14} /></button></form>
     {error && <p className="tv-inline-error" role="alert">{error}</p>}
     {busy && !items.length ? <LoadingState label="Loading your watchlist…" /> : <div className="tv-watchlist-list">{items.map((item) => <div className={`tv-watchlist-row ${item.symbol === selectedSymbol ? 'active' : ''}`} key={item._id || item.symbol}>
-      <button type="button" className="tv-watchlist-select" onClick={() => onSelectSymbol(item.symbol)}><span className="tv-coin-dot">{item.symbol.slice(0, 1)}</span><span><b>{item.displayName || item.symbol}</b><small>{item.symbol}</small></span><small>USDT</small></button>
-      {user && <button type="button" className="tv-watch-remove" onClick={() => remove(item)} title={`Remove ${item.symbol}`} aria-label={`Remove ${item.symbol}`} disabled={busy}><X size={13} /></button>}
+      {item.assetType === 'forex' ? <Link className="tv-watchlist-select" to={`/forex/${item.symbol}`}><span className="tv-coin-dot">{item.symbol.slice(0, 1)}</span><span><b>{item.displayName || item.symbol}</b><small>{item.symbol}</small></span><small>FX</small></Link> : item.assetType?.startsWith('india_') ? (() => { const quote = indiaQuotes[`${item.exchange}:${item.symbol}`]; const price = Number(quote?.price); const change = Number(quote?.changePercent); const priceLabel = quote && Number.isFinite(price) ? `₹${price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}${Number.isFinite(change) ? ` · ${change > 0 ? '+' : ''}${change.toFixed(2)}%` : ''} · EOD${quote.isStale ? ' · stale' : ''}` : 'EOD quote unavailable'; return <Link className="tv-watchlist-select" to={`/india/${item.exchange}/${item.symbol}`}><span className="tv-coin-dot">{item.symbol.slice(0, 1)}</span><span><b>{item.displayName || item.symbol}</b><small>{priceLabel}</small></span><small>{item.exchange}</small></Link>; })() : <button type="button" className="tv-watchlist-select" onClick={() => onSelectSymbol(item.symbol)}><span className="tv-coin-dot">{item.symbol.slice(0, 1)}</span><span><b>{item.displayName || item.symbol}</b><small>{item.symbol}</small></span><small>{item.assetType === 'stock' ? item.exchange || 'Stock' : 'USDT'}</small></button>}
+      {user && <><button type="button" className="tv-watch-remove" onClick={() => moveItem(item, -1)} title="Move up" aria-label={`Move ${item.symbol} up`} disabled={busy || items[0]?._id === item._id}><ArrowUp size={12} /></button><button type="button" className="tv-watch-remove" onClick={() => moveItem(item, 1)} title="Move down" aria-label={`Move ${item.symbol} down`} disabled={busy || items.at(-1)?._id === item._id}><ArrowDown size={12} /></button><button type="button" className="tv-watch-remove" onClick={() => remove(item)} title={`Remove ${item.symbol}`} aria-label={`Remove ${item.symbol}`} disabled={busy}><X size={13} /></button></>}
     </div>)}</div>}
     {!user && <Link className="tv-muted-link" to="/signin">Sign in to sync your watchlist</Link>}
   </div>;
@@ -559,6 +652,8 @@ function TradeTab({ chartSymbol, portfolio, portfolioLoading, refreshPortfolio }
   const { user, logout } = useAuth();
   const [symbol, setSymbol] = useState(chartSymbol);
   const [side, setSide] = useState('buy');
+  const [orderType, setOrderType] = useState('market');
+  const [limitPriceInput, setLimitPriceInput] = useState('');
   const [mode, setMode] = useState(DEFAULT_PAPER_ORDER.mode);
   const [input, setInput] = useState(DEFAULT_PAPER_ORDER.input);
   const [quote, setQuote] = useState(null);
@@ -588,25 +683,31 @@ function TradeTab({ chartSymbol, portfolio, portfolioLoading, refreshPortfolio }
     refresh(); const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 15_000);
     return () => { active = false; window.clearInterval(timer); };
   }, [symbol]);
-  const preview = useMemo(() => getPaperOrderPreview({ mode, input, quote, symbol }), [mode, input, quote, symbol]);
+  const previewQuote = orderType === 'limit' && Number.isFinite(Number(limitPriceInput)) && Number(limitPriceInput) > 0
+    ? { symbol, price: Number(limitPriceInput), updatedAt: quote?.updatedAt }
+    : quote;
+  const preview = useMemo(() => getPaperOrderPreview({ mode, input, quote: previewQuote, symbol }), [mode, input, previewQuote, symbol]);
   const holding = portfolio?.holdings?.find((item) => item.symbol === symbol);
-  const canSubmit = canSubmitPaperOrder({ mode, input, quote, symbol, side, availableCash: portfolio?.cash, holdingQuantity: holding?.quantity, busy: busy || portfolioLoading });
+  const limitPriceValid = orderType !== 'limit' || (Number.isFinite(Number(limitPriceInput)) && Number(limitPriceInput) > 0 && Number(limitPriceInput) <= 1_000_000_000 && Number(Number(limitPriceInput).toFixed(8)) === Number(limitPriceInput));
+  const canSubmit = limitPriceValid && canSubmitPaperOrder({ mode, input, quote: previewQuote, symbol, side, availableCash: portfolio?.availableCash ?? portfolio?.cash, holdingQuantity: holding?.availableQuantity ?? holding?.quantity, busy: busy || portfolioLoading });
   const inputMessage = getPaperOrderInputMessage(mode, input);
-  const qty = getPaperOrderExecutionQuantity({ mode, input, quote, symbol });
   const from = { pathname: `/chart/${chartSymbol}`, search: '?tab=trade' };
-  function changeMode(nextMode) { setInput(getPaperOrderModeInput({ mode, nextMode, input, quote, symbol })); setMode(nextMode); }
+  function changeMode(nextMode) { setInput(getPaperOrderModeInput({ mode, nextMode, input, quote: previewQuote, symbol })); setMode(nextMode); }
   async function submit(event) {
     event.preventDefault();
     if (lock.current || !canSubmit) return;
     lock.current = true; setBusy(true); setMessage(''); setError('');
     const amount = Number(input);
-    const order = { symbol, side, ...(mode === 'quote' ? { amountUsdt: amount } : { quantity: amount }) };
+    const order = { symbol, side, orderType, ...(mode === 'quote' ? { amountUsdt: amount } : { quantity: amount }) };
+    if (orderType === 'limit') order.limitPrice = Number(limitPriceInput);
     try {
       const response = await api.paperOrder(order, getPaperOrderIdempotencyKey(order, pendingOrderRef));
       clearPaperOrderIdempotencyKey(order, pendingOrderRef);
       setMessage(response.trade
         ? `${response.trade.side.toUpperCase()} paper order filled: ${money(response.trade.notional, 4)} USDT.`
-        : 'This order was already processed. Your paper portfolio is up to date.');
+        : response.order?.status === 'pending'
+          ? `${response.order.side.toUpperCase()} limit order placed for ${money(response.order.limitPrice, 4)} USDT.`
+          : 'This order was already processed. Your paper portfolio is up to date.');
       setInput('');
       await refreshPortfolio();
     } catch (requestError) {
@@ -621,19 +722,21 @@ function TradeTab({ chartSymbol, portfolio, portfolioLoading, refreshPortfolio }
     {portfolioLoading && !portfolio && <LoadingState label="Loading your paper balance…" />}
     {error && <div className="tv-callout error" role="alert">{error}{!user && <Link to="/signin" state={{ from }}>Sign in</Link>}</div>}
     {message && <div className="tv-callout success" role="status">{message}</div>}
-    <div className="tv-trade-title"><div><b>Paper market order</b><small>Simulated only · no Binance transaction</small></div><span className="tv-paper-tag">PAPER</span></div>
+     <div className="tv-trade-title"><div><b>Paper order</b><small>Simulated only · no Binance transaction</small></div><span className="tv-paper-tag">PAPER</span></div>
     <div className="tv-side-toggle"><button type="button" className={side === 'buy' ? 'buy active' : ''} onClick={() => { setSide('buy'); setError(''); }}>Buy</button><button type="button" className={side === 'sell' ? 'sell active' : ''} onClick={() => { setSide('sell'); setError(''); }}>Sell</button></div>
     <label className="tv-form-label">Trading pair<select value={symbol} onChange={(event) => setSymbol(event.target.value)}>{pairs.map((pair) => <option key={pair} value={pair}>{pair.replace('USDT', '')} / USDT</option>)}</select></label>
+     <label className="tv-form-label">Order type<select value={orderType} onChange={(event) => { setOrderType(event.target.value); setLimitPriceInput(''); }}><option value="market">Market</option><option value="limit">Limit</option></select></label>
+     {orderType === 'limit' && <label className="tv-form-label">Limit price (USDT)<input type="number" required min="0.00000001" max="1000000000" step="0.00000001" value={limitPriceInput} onChange={(event) => setLimitPriceInput(event.target.value)} placeholder="Price per unit" /></label>}
     <div className="tv-order-mode"><button type="button" className={mode === 'quote' ? 'active' : ''} onClick={() => changeMode('quote')}>Amount (USDT)</button><button type="button" className={mode === 'quantity' ? 'active' : ''} onClick={() => changeMode('quantity')}>Quantity</button></div>
     <label className="tv-form-label">{mode === 'quote' ? 'Order amount (USDT)' : `Quantity (${symbol.replace('USDT', '')})`}<input type="number" min={mode === 'quote' ? '0.01' : '0.00000001'} max={mode === 'quote' ? '1000000000' : '1000000'} step={mode === 'quote' ? '0.01' : '0.00000001'} placeholder={mode === 'quote' ? '100.00' : '0.001'} value={input} onChange={(event) => setInput(event.target.value)} /></label>
     <div className="tv-trade-market"><span>Current Binance price</span><b>{quote?.symbol === symbol && isPaperQuoteFresh(quote) ? `${money(quote.price, 4)} USDT` : quoteLoading ? 'Loading quote…' : 'Unavailable'}</b></div>
     {quoteError && <p className="tv-inline-error" role="alert">{quoteError}</p>}
     <div className="tv-trade-estimates"><span>Estimated order value</span><b>{preview ? `${money(preview.value, 4)} USDT` : quoteLoading ? 'Loading live quote…' : quoteError ? 'Quote unavailable' : quote?.symbol === symbol && !isPaperQuoteFresh(quote) ? 'Quote is stale; refreshing…' : inputMessage || 'Waiting for a live quote'}</b><span>Estimated quantity</span><b>{preview ? `${money(preview.quantity, 8)} ${symbol.replace('USDT', '')}` : '—'}</b></div>
-    {portfolio && <div className="tv-available-balance"><span>{side === 'buy' ? 'Available cash' : `Available ${symbol.replace('USDT', '')}`}</span><b>{side === 'buy' ? `${money(portfolio.cash, 2)} USDT` : `${money(holding?.quantity || 0, 8)} ${symbol.replace('USDT', '')}`}</b></div>}
-    {side === 'buy' && preview && portfolio && preview.value > portfolio.cash && <p className="tv-inline-error">Insufficient cash for this order.</p>}
+    {portfolio && <div className="tv-available-balance"><span>{side === 'buy' ? 'Available cash' : `Available ${symbol.replace('USDT', '')}`}</span><b>{side === 'buy' ? `${money(portfolio.availableCash ?? portfolio.cash, 2)} USDT` : `${money(holding?.availableQuantity ?? holding?.quantity ?? 0, 8)} ${symbol.replace('USDT', '')}`}</b></div>}
+     {side === 'buy' && preview && portfolio && preview.value > (portfolio.availableCash ?? portfolio.cash) && <p className="tv-inline-error">Insufficient available cash for this order.</p>}
     {side === 'sell' && preview && portfolio && !canSubmit && <p className="tv-inline-error">Insufficient {symbol.replace('USDT', '')} holdings for this order.</p>}
     <button type="button" className={`tv-order-submit ${side}`} disabled={!canSubmit} onClick={submit}>{busy ? 'Submitting paper order…' : `Place Paper ${side === 'buy' ? 'Buy' : 'Sell'}`}</button>
-    <p className="tv-trade-disclaimer">The server fetches the execution price and validates your balance. This is a simulated trade.</p>
+     <p className="tv-trade-disclaimer">{orderType === 'limit' ? 'Buy limits wait for Binance last price at or below the limit; sells wait for at or above. Fills use the limit price.' : 'The server fetches the execution price and validates available funds.'} Simulated only.</p>
     <Link className="tv-muted-link" to="/paper-trading">Open full Paper Trading workspace <ExternalLink size={12} /></Link>
   </div>;
 }
@@ -647,9 +750,11 @@ function PortfolioTab({ portfolio, loading, error, symbol, onRefresh }) {
   return <div className="tv-tab-content tv-portfolio-tab">
     <div className="tv-tab-subhead"><b>Paper portfolio</b><button type="button" className="tv-icon-button" onClick={onRefresh} title="Refresh portfolio"><RefreshCw size={13} /></button></div>
     {error && <p className="tv-inline-error">{error}</p>}
-    <div className="tv-portfolio-stats"><div><span>Available cash</span><b>{money(portfolio.cash, 2)} USDT</b></div><div><span>Portfolio value</span><b>{portfolio.equity === null ? 'Unavailable' : `${money(portfolio.equity, 2)} USDT`}</b></div><div><span>Realized P/L</span><b className={portfolio.realizedPnl >= 0 ? 'positive' : 'negative'}>{money(portfolio.realizedPnl, 2)} USDT</b></div><div><span>Unrealized P/L</span><b className={portfolio.unrealizedPnl === null ? '' : portfolio.unrealizedPnl >= 0 ? 'positive' : 'negative'}>{portfolio.unrealizedPnl === null ? 'Unavailable' : `${money(portfolio.unrealizedPnl, 2)} USDT`}</b></div></div>
+     <div className="tv-portfolio-stats"><div><span>Available cash</span><b>{money(portfolio.availableCash ?? portfolio.cash, 2)} USDT</b></div><div><span>Portfolio value</span><b>{portfolio.equity === null ? 'Unavailable' : `${money(portfolio.equity, 2)} USDT`}</b></div><div><span>Realized P/L</span><b className={portfolio.realizedPnl >= 0 ? 'positive' : 'negative'}>{money(portfolio.realizedPnl, 2)} USDT</b></div><div><span>Unrealized P/L</span><b className={portfolio.unrealizedPnl === null ? '' : portfolio.unrealizedPnl >= 0 ? 'positive' : 'negative'}>{portfolio.unrealizedPnl === null ? 'Unavailable' : `${money(portfolio.unrealizedPnl, 2)} USDT`}</b></div></div>
     <div className="tv-subsection-title">Open positions</div>
-    {!portfolio.holdings.length ? <div className="tv-empty-small">No open positions.</div> : <div className="tv-compact-list">{portfolio.holdings.map((item) => <div key={item.symbol}><span><b>{item.symbol}</b><small>{money(item.quantity, 8)} · entry {money(item.averageEntryPrice, 4)}</small></span><span><b>{item.marketValue === null ? 'Unavailable' : `${money(item.marketValue, 2)} USDT`}</b><small className={(item.unrealizedPnl || 0) >= 0 ? 'positive' : 'negative'}>{item.unrealizedPnl === null ? 'P/L unavailable' : `${money(item.unrealizedPnl, 2)} USDT`}</small></span></div>)}</div>}
+     {!portfolio.holdings.length ? <div className="tv-empty-small">No open positions.</div> : <div className="tv-compact-list">{portfolio.holdings.map((item) => <div key={item.symbol}><span><b>{item.symbol} · Long</b><small>{money(item.quantity, 8)} · entry {money(item.averageEntryPrice, 4)}</small></span><span><b>{item.marketValue === null ? 'Unavailable' : `${money(item.marketValue, 2)} USDT`}</b><small className={(item.unrealizedPnl || 0) >= 0 ? 'positive' : 'negative'}>{item.unrealizedPnl === null ? 'P/L unavailable' : `${money(item.unrealizedPnl, 2)} USDT`}</small></span></div>)}</div>}
+     <div className="tv-subsection-title">Pending limit orders</div>
+     {!(portfolio.orders || []).some((order) => order.status === 'pending') ? <div className="tv-empty-small">No pending orders.</div> : <div className="tv-compact-list">{portfolio.orders.filter((order) => order.status === 'pending').map((order) => <div key={order.orderId}><span><b>{order.side.toUpperCase()} · {order.symbol}</b><small>{money(order.quantity, 8)} units · limit</small></span><span><b>{money(order.limitPrice, 4)} USDT</b><small>{order.status}</small></span></div>)}</div>}
     <div className="tv-subsection-title">Recent paper trades</div>
     {!portfolio.trades.length ? <div className="tv-empty-small">No paper trades yet.</div> : <div className="tv-compact-list">{[...portfolio.trades].reverse().slice(0, 8).map((trade) => <div key={trade.orderId}><span><b>{trade.side.toUpperCase()} · {trade.symbol}</b><small>{formatChartTime(Math.floor(new Date(trade.executedAt).getTime() / 1000))}</small></span><span><b>{money(trade.notional, 2)} USDT</b><small>{money(trade.quantity, 8)} @ {money(trade.executionPrice, 4)}</small></span></div>)}</div>}
     <Link className="tv-muted-link" to="/paper-trading">View complete portfolio and trade history <ExternalLink size={12} /></Link>
@@ -659,35 +764,68 @@ function PortfolioTab({ portfolio, loading, error, symbol, onRefresh }) {
 function AlertsTab({ symbol }) {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState([]);
+  const [selectedSymbol, setSelectedSymbol] = useState(symbol);
   const [target, setTarget] = useState('');
   const [condition, setCondition] = useState('greater_than');
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [workingAlertId, setWorkingAlertId] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const submissionKeyRef = useRef(null);
+  const targetValue = Number(target);
+  const validTarget = target.trim() !== '' && Number.isFinite(targetValue) && targetValue > 0;
+  useEffect(() => { setSelectedSymbol(symbol); }, [symbol]);
   const load = useCallback(async () => {
     if (!user) { setAlerts([]); return; }
-    setBusy(true); setError('');
+    setLoading(true); setError('');
     try { const response = await api.alerts(); setAlerts(response.data || []); }
     catch (requestError) { setError(requestError.message); }
-    finally { setBusy(false); }
+    finally { setLoading(false); }
   }, [user]);
   useEffect(() => { load(); }, [load]);
+  async function toggleAlert(alert) {
+    setWorkingAlertId(alert._id); setError(''); setMessage('');
+    try {
+      const response = await api.updateAlert(alert._id, { isActive: !alert.isActive });
+      setAlerts((current) => current.map((item) => item._id === alert._id ? response.data : item));
+    } catch (requestError) { setError(requestError.message); }
+    finally { setWorkingAlertId(''); }
+  }
+  async function removeAlert(alert) {
+    setWorkingAlertId(alert._id); setError(''); setMessage('');
+    try {
+      await api.deleteAlert(alert._id);
+      setAlerts((current) => current.filter((item) => item._id !== alert._id));
+      setMessage(`${alert.symbol} alert removed.`);
+    } catch (requestError) { setError(requestError.message); }
+    finally { setWorkingAlertId(''); }
+  }
   async function submit(event) {
     event.preventDefault();
-    if (!user) return;
-    setBusy(true); setError(''); setMessage('');
+    if (!user || !validTarget || submitting) return;
+    setSubmitting(true); setError(''); setMessage('');
+    const payload = { symbol: selectedSymbol, assetType: 'crypto', condition, targetValue };
+    const fingerprint = JSON.stringify(payload);
+    if (submissionKeyRef.current?.fingerprint !== fingerprint) {
+      submissionKeyRef.current = { fingerprint, key: crypto.randomUUID() };
+    }
     try {
-      await api.createAlert({ symbol, assetType: 'crypto', condition, targetValue: Number(target) });
-      setMessage(`Alert created for ${symbol}.`); setTarget(''); await load();
-    } catch (requestError) { setError(requestError.message); setBusy(false); }
+      const response = await api.createAlert(payload, submissionKeyRef.current.key);
+      if (response.data) setAlerts((current) => [response.data, ...current.filter((alert) => alert._id !== response.data._id)]);
+      setMessage(`Alert created for ${selectedSymbol}.`);
+      setTarget('');
+      submissionKeyRef.current = null;
+    } catch (requestError) { setError(requestError.message); }
+    finally { setSubmitting(false); }
   }
   if (!user) return <div className="tv-tab-content"><SignInPrompt symbol={symbol} compact /></div>;
   return <div className="tv-tab-content">
-    <div className="tv-tab-subhead"><b>Price alerts</b><button type="button" className="tv-icon-button" onClick={load} disabled={busy} title="Refresh alerts"><RefreshCw size={13} /></button></div>
-    <form className="tv-alert-form" onSubmit={submit}><label>Pair<select value={symbol} onChange={() => {}} disabled>{<option value={symbol}>{symbol}</option>}</select></label><label>Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}><option value="greater_than">Price rises above</option><option value="less_than">Price falls below</option></select></label><label>Target price (USDT)<input type="number" required min="0.00000001" step="any" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="Target price" /></label><button className="tv-order-submit" disabled={busy || !target}>{busy ? 'Saving…' : <><BellPlus size={14} /> Create alert</>}</button></form>
+    <div className="tv-tab-subhead"><b>Price alerts</b><button type="button" className="tv-icon-button" onClick={load} disabled={loading} title="Refresh alerts"><RefreshCw size={13} /></button></div>
+    <form className="tv-alert-form" onSubmit={submit}><label>Pair<select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)}>{[...new Set([symbol, ...pairs])].map((pair) => <option value={pair} key={pair}>{pair}</option>)}</select></label><label>Condition<select value={condition} onChange={(event) => setCondition(event.target.value)}><option value="greater_than">Price rises above</option><option value="less_than">Price falls below</option></select></label><label>Target price (USDT)<input type="number" required min="0.00000001" step="any" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="Target price" /></label><button className="tv-order-submit" disabled={submitting || !validTarget}>{submitting ? 'Saving…' : <><BellPlus size={14} /> Create alert</>}</button></form>
     {error && <p className="tv-inline-error" role="alert">{error}</p>}{message && <p className="tv-inline-success" role="status">{message}</p>}
     <div className="tv-subsection-title">Saved alerts</div>
-    {busy && !alerts.length ? <LoadingState label="Loading your alerts…" /> : alerts.length ? <div className="tv-compact-list">{alerts.map((alert) => <div key={alert._id}><span><b>{alert.symbol}</b><small>{alert.triggerCondition?.replace('_', ' ') || 'Price condition'}</small></span><span><b>{money(alert.targetValue, 4)} USDT</b><small>{alert.isActive ? 'Active' : 'Paused'}</small></span></div>)}</div> : <div className="tv-empty-small">No saved alerts.</div>}
+    {loading && !alerts.length ? <LoadingState label="Loading your alerts…" /> : alerts.length ? <div className="tv-compact-list">{alerts.map((alert) => <div key={alert._id}><span><b>{alert.symbol}</b><small>{alert.triggerCondition?.replace('_', ' ') || 'Price condition'}</small></span><span><b>{money(alert.targetValue, 4)} USDT</b><small>{alert.isActive ? 'Active' : 'Paused'}</small></span><span className="tv-alert-actions"><button type="button" className="tv-icon-button" disabled={workingAlertId === alert._id} onClick={() => toggleAlert(alert)} title={alert.isActive ? 'Pause alert' : 'Resume alert'}>{alert.isActive ? 'Pause' : 'Resume'}</button><button type="button" className="tv-icon-button" disabled={workingAlertId === alert._id} onClick={() => removeAlert(alert)} title="Delete alert"><Trash2 size={12} /></button></span></div>)}</div> : <div className="tv-empty-small">No saved alerts.</div>}
     <Link className="tv-muted-link" to="/markets/crypto">Manage more alerts in your market workspace <ExternalLink size={12} /></Link>
   </div>;
 }
@@ -754,7 +892,7 @@ export default function ChartWorkspace() {
   }, [user]);
   useEffect(() => {
     if (!user) { setPortfolio(null); setPortfolioError(''); return; }
-    if (activeTab === 'trade' || activeTab === 'portfolio') refreshPortfolio().catch(() => {});
+    refreshPortfolio().catch(() => {});
   }, [user, activeTab, refreshPortfolio]);
 
   const updateDrawings = useCallback((update) => {
@@ -813,7 +951,7 @@ export default function ChartWorkspace() {
           <Link className="tv-full-paper-link" to="/paper-trading"><TrendingUp size={14} /><span>Paper Trading</span></Link>
         </div>
         <div className="tv-chart-layout">
-          <ChartSurface symbol={symbol} interval={interval} chartType={chartType} indicators={indicators} activeTool={activeTool} drawings={drawings} selectedDrawing={selectedDrawing} onAddDrawing={addDrawing} onSelectDrawing={selectOrDeleteDrawing} onMarketQuote={mergeMarketQuote} textAnnotation={textAnnotation} onInterval={setInterval} onChartType={setChartType} showIndicators={showIndicators} onToggleIndicators={(indicator) => indicator ? toggleIndicator(indicator) : setShowIndicators((value) => !value)} />
+          <ChartSurface symbol={symbol} interval={interval} chartType={chartType} indicators={indicators} activeTool={activeTool} drawings={drawings} selectedDrawing={selectedDrawing} onAddDrawing={addDrawing} onSelectDrawing={selectOrDeleteDrawing} onMarketQuote={mergeMarketQuote} paperPortfolio={portfolio} textAnnotation={textAnnotation} onInterval={setInterval} onChartType={setChartType} showIndicators={showIndicators} onToggleIndicators={(indicator) => indicator ? toggleIndicator(indicator) : setShowIndicators((value) => !value)} />
         </div>
       </div>
       <aside className="tv-chart-sidebar">

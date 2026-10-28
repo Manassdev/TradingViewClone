@@ -95,6 +95,25 @@ test('technical-analysis signals expose explicit kinds and use completed hourly 
   assert.ok(result.ideas.every((idea) => idea.generatedAt === generatedAt));
 });
 
+test('a 9/21 moving-average trend keeps market ideas populated when no event trigger occurs', () => {
+  const now = Date.parse(generatedAt);
+  const candleRows = Array.from({ length: 24 }, (_, index) => {
+    const openTime = now - ((24 - index) * 60 * 60 * 1000);
+    const close = 100 + index;
+    return [openTime, close, close + 1, close - 1, close, 1000, openTime + 3_599_999];
+  });
+  const result = generateIdeasForSymbol({
+    symbol: 'BTCUSDT',
+    ticker: { lastPrice: '124', priceChangePercent: '1.25', closeTime: now - 1 },
+    candleRows,
+    now
+  });
+
+  assert.equal(result.ideas.length, 1);
+  assert.equal(result.ideas[0].kind, 'sma-bullish-trend');
+  assert.match(result.ideas[0].description, /latest completed 1-hour 9-period SMA is above the 21-period SMA/);
+});
+
 test('market ideas attach real completed Binance closes for sparkline previews', async () => {
   const originalFetch = globalThis.fetch;
   const originalBase = process.env.BINANCE_API_BASE;

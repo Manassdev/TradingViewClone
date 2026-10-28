@@ -21,7 +21,7 @@ const watchlistSchema = new mongoose.Schema({
   },
   assetType: {
     type: String,
-    enum: ['stock', 'crypto']
+    enum: ['stock', 'crypto', 'india_stock', 'india_index']
   },
   exchange: {
     type: String,

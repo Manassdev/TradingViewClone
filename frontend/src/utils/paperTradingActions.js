@@ -2,7 +2,7 @@ import { clearPaperOrderIdempotencyKey, getPaperOrderIdempotencyKey } from './pa
 
 export const makeFullHoldingSellOrder = (holding) => {
   const symbol = typeof holding?.symbol === 'string' ? holding.symbol.toUpperCase() : '';
-  const quantity = Number(holding?.quantity);
+  const quantity = Number(holding?.availableQuantity ?? holding?.quantity);
   if (!/^[A-Z0-9]{2,18}USDT$/.test(symbol) || !Number.isFinite(quantity) || quantity <= 0) return null;
   const preciseQuantity = Number(quantity.toFixed(8));
   return preciseQuantity > 0 ? { symbol, side: 'sell', quantity: preciseQuantity } : null;

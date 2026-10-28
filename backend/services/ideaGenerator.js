@@ -103,6 +103,16 @@ export const generateIdeasForSymbol = ({ symbol, ticker, candleRows, now = Date.
         indicator: `${SHORT_SMA_PERIOD}/${LONG_SMA_PERIOD} SMA crossover`,
         description: `On completed 1-hour candles, the ${SHORT_SMA_PERIOD}-period SMA crossed below the ${LONG_SMA_PERIOD}-period SMA. The previous short average was at or above the long average; the latest short average is below it.`
       }));
+    } else {
+      const bullishTrend = currentShort >= currentLong;
+      ideas.push(createIdea({
+        ...shared,
+        kind: bullishTrend ? 'sma-bullish-trend' : 'sma-bearish-trend',
+        signal: bullishTrend ? 'bullish' : 'bearish',
+        title: `${symbol} 1-Hour Moving Average Trend`,
+        indicator: `${SHORT_SMA_PERIOD}/${LONG_SMA_PERIOD} SMA trend`,
+        description: `The latest completed 1-hour ${SHORT_SMA_PERIOD}-period SMA is ${bullishTrend ? 'above' : 'below'} the ${LONG_SMA_PERIOD}-period SMA. This describes the current moving-average relationship; it is not a crossover signal.`
+      }));
     }
   }
 

@@ -22,7 +22,15 @@ export const validateEnvironment = () => {
     throw new Error('JWT_SECRET must be a unique generated secret, not a placeholder.');
   }
 
-  return { port };
+  if (!/^mongodb(?:\+srv)?:\/\//i.test(process.env.MONGODB_URI.trim())) {
+    throw new Error('MONGODB_URI must start with mongodb:// or mongodb+srv://.');
+  }
+  const connectTimeout = Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 5_000);
+  if (!Number.isInteger(connectTimeout) || connectTimeout < 1_000 || connectTimeout > 30_000) {
+    throw new Error('MONGODB_CONNECT_TIMEOUT_MS must be an integer from 1000 to 30000.');
+  }
+
+  return { port, connectTimeout };
 };
 
 export const getJwtSecret = () => {

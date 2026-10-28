@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'node:url';
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -11,13 +12,16 @@ import commentRoutes from './routes/commentRoutes.js';
 import marketRoutes from './routes/marketRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
 import paperTradingRoutes from './routes/paperTradingRoutes.js';
+import forexRoutes from './routes/forexRoutes.js';
+import indiaRoutes from './routes/indiaRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-import { startAlertMonitor } from './services/alertMonitor.js';
+import { startAlertMonitor, stopAlertMonitor } from './services/alertMonitor.js';
+import { startPaperOrderMonitor, stopPaperOrderMonitor } from './services/paperOrderMonitor.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { validateEnvironment } from './config/env.js';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: fileURLToPath(new URL('./.env', import.meta.url)) });
 
 let config;
 try {
@@ -28,6 +32,7 @@ try {
 }
 
 const app = express();
+app.disable('x-powered-by');
 
 // CORS Configuration
 const allowedOrigins = [
@@ -44,7 +49,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser requests (like Postman, curl, server-to-server) or matching origins
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
@@ -52,7 +57,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'Idempotency-Key']
 }));
 
 // Body parsing middleware
@@ -82,6 +87,8 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/market', marketRoutes);
+app.use('/api/forex', forexRoutes);
+app.use('/api/india', indiaRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/paper-trading', paperTradingRoutes);
 
@@ -93,14 +100,42 @@ app.use(errorHandler);
 try {
   await connectDB();
   if (process.env.NODE_ENV === 'test') {
-    console.info('[AlertMonitor] Automatic polling disabled in test mode.');
+    console.info('[Monitors] Automatic polling disabled in test mode.');
   } else {
     startAlertMonitor();
+    startPaperOrderMonitor();
   }
-  app.listen(config.port, () => {
+  const server = app.listen(config.port, () => {
     console.log(`[Express] TradingView Clone Backend running on port ${config.port}`);
     console.log(`[Express] Health check available at /api/health`);
   });
+
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    stopAlertMonitor();
+    stopPaperOrderMonitor();
+    console.info(`[Express] ${signal} received; closing HTTP and MongoDB connections.`);
+    const forceExit = setTimeout(() => {
+      console.error('[Express] Graceful shutdown timed out.');
+      process.exit(1);
+    }, 10_000);
+    forceExit.unref();
+    server.close(async (serverError) => {
+      try {
+        await mongoose.disconnect();
+        if (serverError) throw serverError;
+        clearTimeout(forceExit);
+        process.exit(0);
+      } catch (error) {
+        console.error('[Express] Failed to close cleanly.');
+        process.exit(1);
+      }
+    });
+  };
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
 } catch (error) {
   console.error(`[Startup] ${error.message}`);
   process.exit(1);

@@ -39,23 +39,22 @@ export function CommunityIdeas() {
   const [status, setStatus] = useState('loading');
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
-  const lock = useRef(false);
+  const requestRef = useRef(null);
   const load = useCallback(async ({ quiet = false } = {}) => {
-    if (lock.current) return;
-    lock.current = true;
-    if (!quiet) setStatus(ideas.length ? 'ready' : 'loading');
-    if (ideas.length) setRefreshing(true);
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    if (!quiet) { setStatus('loading'); setRefreshing(true); }
     try {
-      const response = await api.ideas();
+      const response = await api.ideas(controller.signal);
       setIdeas(Array.isArray(response.data) ? response.data : []);
       setMeta(response.meta || null);
       setStatus('ready');
     } catch (error) {
-      setStatus('error');
-      setMeta((value) => ({ ...value, error: error.message }));
-    } finally { lock.current = false; setRefreshing(false); }
-  }, [ideas.length]);
-  useEffect(() => { load(); const timer = window.setInterval(() => load({ quiet: true }), 60_000); return () => window.clearInterval(timer); }, []);
+      if (error.name !== 'AbortError') { setStatus('error'); setMeta((value) => ({ ...value, error: error.message })); }
+    } finally { if (requestRef.current === controller) { requestRef.current = null; setRefreshing(false); } }
+  }, []);
+  useEffect(() => { load(); const timer = window.setInterval(() => load({ quiet: true }), 60_000); return () => { window.clearInterval(timer); requestRef.current?.abort(); }; }, [load]);
 
   const filtered = ideas.filter((idea) => matchesFilter(idea, filter));
   return <section className="ideas-section" id="community-ideas" aria-labelledby="community-ideas-title">
@@ -90,13 +89,14 @@ export function CommunityNews() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const lock = useRef(false);
+  const requestRef = useRef(null);
   const load = useCallback(async (nextCategory = category, quiet = false) => {
-    if (lock.current) return;
-    lock.current = true;
-    if (!quiet) { setStatus('loading'); setError(''); }
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    if (!quiet) { setStatus('loading'); setError(''); setRefreshing(true); }
     try {
-      const response = await api.news(nextCategory);
+      const response = await api.news(nextCategory, controller.signal);
       const data = Array.isArray(response.data) ? response.data : [];
       const unique = new Map();
       for (const article of data) {
@@ -105,10 +105,13 @@ export function CommunityNews() {
       }
       setArticles([...unique.values()].sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)));
       setStatus('ready');
-    } catch (requestError) { setError(requestError.message); setStatus('error'); }
-    finally { lock.current = false; setRefreshing(false); }
+    } catch (requestError) {
+      if (requestError.name !== 'AbortError') { setError(requestError.message); setStatus('error'); }
+    } finally {
+      if (requestRef.current === controller) { requestRef.current = null; setRefreshing(false); }
+    }
   }, [category]);
-  useEffect(() => { load(category); const timer = window.setInterval(() => load(category, true), 15 * 60_000); return () => window.clearInterval(timer); }, [category]);
+  useEffect(() => { load(category); const timer = window.setInterval(() => load(category, true), 15 * 60_000); return () => { window.clearInterval(timer); requestRef.current?.abort(); }; }, [category, load]);
   function selectCategory(next) { if (next === category) return; setCategory(next); setRefreshing(true); }
 
   return <section className="community-news-section" id="community" aria-labelledby="community-news-title">

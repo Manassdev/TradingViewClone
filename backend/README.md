@@ -135,27 +135,76 @@ Expected JSON response:
   "database": "connected",
   "databaseType": "Local MongoDB (migrated instance) / MongoDB Atlas",
   "databaseName": "tradingview",
-  "collections": ["users", "watchlist", "alerts", "comments"]
+  "collections": ["users", "watchlists", "alerts", "notifications", "comments", "paper_portfolios"]
 }
 ```
+
+The current workspace `.env` selects local MongoDB at `127.0.0.1:27017`. If startup reports that the local service is unreachable, install and start MongoDB Community Server (or set `MONGODB_URI` to an Atlas URI whose cluster is running and whose IP access list allows this machine). The backend does not substitute an in-memory database. Startup times out after five seconds by default and reports a configuration hint without printing the connection string. `MONGODB_CONNECT_TIMEOUT_MS` can be set from 1000 to 30000.
+
+Environment variables are loaded from `backend/.env` regardless of the shell's current directory. Copy `.env.example` to `.env`, replace the JWT placeholder with a unique random secret of at least 32 characters, and set either a local `mongodb://` URI or an Atlas `mongodb+srv://` URI. Never commit `.env`.
 
 ---
 
 ## 5. REST API Documentation
 
+### Forex market data (`/api/forex`)
+Forex data uses Twelve Data's composite spot Forex quote and time-series endpoints. Set `TWELVE_DATA_API_KEY` in `backend/.env`; no key is bundled or sent to the browser. Without a key the API responds with an explicit configuration error, and the UI does not substitute sample rates. `FOREX_EXTRA_PAIRS` optionally adds comma-separated 6-letter symbols (for example `USDINR:US Dollar / Indian Rupee`). Each configured pair must also be available to the selected Twelve Data plan. The app identifies provider timestamps and stale data but cannot determine whether an account's entitlement is real-time or delayed; the UI says that delivery speed depends on the plan. Forex spot volume is not returned or synthesized. Bid/ask and spread are shown only if supplied by the provider. Quotes are composite market data and may not be executable broker prices.
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/forex/pairs` | Public | Standard majors/minors plus configured extra pairs and normalized pair metadata. |
+| `GET` | `/api/forex/search?q=EUR` | Public | Search symbols, base/quote currencies, and pair names (40-character query maximum). |
+| `GET` | `/api/forex/quotes?symbols=EURUSD,GBPUSD` | Public | 1–20 supported pairs; omitted symbols requests the seven majors. Includes per-symbol errors and provider-reported daily movers. |
+| `GET` | `/api/forex/quotes/:symbol` | Public | One normalized provider quote. |
+| `GET` | `/api/forex/candles/:symbol?interval=1h&limit=300` | Public | OHLC history; intervals are `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1D`, `1W`, `1M`; limit is 10–500. No volume field is provided. |
+| `GET` | `/api/forex/analytics/:symbol?period=1m&compare=GBPUSD` | Public | Period return/high/low, optional comparison, and documented major-pair currency-strength estimate. Periods: `1w`, `1m`, `3m`, `1y`. |
+
+The backend caches quotes for 60 seconds and candles for five minutes; displayed quote staleness is marked after five minutes. Provider timeouts are bounded and retried once only for timeout/5xx failures. Provider rate-limit responses are passed through as HTTP 429 with `Retry-After`; observe the quota and symbol entitlements of your account. The currency-strength estimate averages provider daily percentage return contributions. For each quote currency it uses the mathematically inverted pair return, `-r / (1 + r)` (where `r` is the pair return as a decimal), and only reports currencies represented by at least two major pairs; it is not an official index.
+
+#### Provider account and data-use notes
+Create a Twelve Data account, create an API key, and add it to `backend/.env` as `TWELVE_DATA_API_KEY`. Restart the backend after changing the file. Plan availability, request credits, WebSocket limits, and display/redistribution rights depend on the account and intended use. The application uses REST quotes and OHLC history; it does not promise tick-level quotes or broker bid/ask. Review the [Twelve Data Forex API v2 support page](https://support.twelvedata.com/en/articles/12520817-forex-api-v2), [API documentation](https://twelvedata.com/docs), [trial limits](https://support.twelvedata.com/en/articles/5335783-trial), and [pricing and data-plan terms](https://twelvedata.com/pricing) before public or commercial display. Do not assume a free plan permits public display or redistribution.
+
+Forex pairs can be saved to existing named watchlists as `assetType: "forex"`; stored symbols are normalized without slashes. Existing stock and crypto watchlist records remain valid. Forex alert creation and recurring quote evaluation are not enabled: automatic review blocked integrating the backend alert poller because it would repeatedly send the configured Twelve Data API key to a third party. Do not describe Forex alerts as operational until this specific integration has explicit authorization and provider-backed tests.
+
+### Indian market data (`/api/india`)
+India equities use the Twelve Data adapter and a local exchange-aware instrument registry. Requests always send both the provider symbol and its exact NSE/BSE exchange; provider metadata is checked when returned and there is no NSE-to-BSE fallback. The seeded registry includes the requested common NSE/BSE stocks and NIFTY 50, NIFTY Bank, and SENSEX as provider candidates. Unsupported symbols, index entitlements, or plans return clear errors and are never filled with sample prices. No India index is considered available until Twelve Data successfully returns a quote for that exact symbol/exchange.
+
+Twelve Data currently lists India exchange feeds as end-of-day (EOD), not real-time. India access is shown on its Grow/Venture tiers for NSE and BSE; actual API entitlement still depends on the account. This application therefore enables only `1D`, `1W`, and `1M` candles for India; intraday controls are intentionally omitted. Quotes cache for 15 minutes and candles for one hour. Returned exchange-local naive timestamps are interpreted as `Asia/Kolkata` and normalized to UTC. Volume is included only when the provider returns it. Quotes older than five days are marked stale. Analytics use the configured NSE sample; gainers and losers sort provider-reported daily percentage change, most-active sorts provider-reported volume, and sector return is the unweighted mean of sample constituents rather than an official sector index. Public/commercial display rights depend on the selected data plan and exchange rules; confirm them with the provider before deployment.
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/india/instruments?exchange=NSE` | Public | Exchange-aware registry (NSE/BSE) with provider symbols and INR metadata. |
+| `GET` | `/api/india/search?q=RELIANCE` | Public | Search companies, tickers, exchanges, and registered index names. |
+| `GET` | `/api/india/quotes?symbols=NSE:RELIANCE,BSE:RELIANCE` | Public | Up to 20 exact registered instruments; includes per-symbol errors and EOD timestamp/source. |
+| `GET` | `/api/india/quotes/:exchange/:symbol` | Public | One normalized provider quote for the exact listing. |
+| `GET` | `/api/india/candles/:exchange/:symbol?interval=1D&limit=180` | Public | Provider OHLCV history; intervals: `1D`, `1W`, `1M`; limit 10–500. |
+| `GET` | `/api/india/indices` | Public | Quotes for registered Indian index candidates; unsupported index candidates return errors. |
+| `GET` | `/api/india/market-status` | Public | IST schedule state using weekdays and configured official holiday dates. |
+| `GET` | `/api/india/analytics` | Public | NSE sample gainers/losers, provider-volume leaders, and explicitly labeled sample sector returns. |
+
+Configure `TWELVE_DATA_API_KEY` in `backend/.env` using an account with India EOD exchange entitlements. Configure `INDIA_MARKET_HOLIDAYS` as a comma-separated, operator-maintained list of official `YYYY-MM-DD` NSE/BSE holidays, including the current year; if the list has no current-year date, weekday market status is `unknown`. Special sessions are not inferred. Check the official exchange calendar and replace the dates each year. India alerts are stored in the existing `alerts` collection and evaluated by the backend scheduler from new provider EOD quotes only after the configured regular session closes. They do not run intraday; they continue only while the backend is running and connected to MongoDB. Alert notifications use the existing `notifications` collection and unique alert/trigger key to avoid duplicates. Generic legacy `stock` alerts and Forex alerts remain unmonitored.
+
+The provider adapter requires an actual eligible subscription for India exchange data. A key can authenticate successfully while lacking India EOD entitlement; in that case the UI reports the provider error and displays no price. The project does not cache or bundle credentials in React.
+
 ### Authentication (`/api/auth`)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Public | Register new user. Hashes password with bcrypt (10 rounds), initializes default watchlist in DB, returns JWT. |
-| `POST` | `/api/auth/login` | Public | Authenticates user (supports both email and username), verifies bcrypt hash, returns JWT. |
+| `POST` | `/api/auth/register` | Public | Register user with bcrypt password hash; limited to 5 requests per IP in 15 minutes. |
+| `POST` | `/api/auth/login` | Public | Authenticates by email or username; limited to 10 requests per IP in 15 minutes. |
+| `POST` | `/api/auth/logout` | Private | Increments the user's token version to invalidate existing JWTs. |
 | `GET` | `/api/users/me` | Private | Returns current authenticated user profile (excluding password). |
 
 ### Watchlist (`/api/watchlist`)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/watchlist` | Private | Retrieves the authenticated user's watchlist symbols from MongoDB. |
-| `POST` | `/api/watchlist` | Private | Adds symbol(s) to the authenticated user's watchlist. |
-| `DELETE`| `/api/watchlist/:id` | Private | Removes symbol from the user's watchlist. |
+| `POST` | `/api/watchlist` | Private | Adds an asset to the selected or default watchlist. |
+| `GET` | `/api/watchlist/lists` | Private | Lists the user's named watchlists and ordered assets. |
+| `POST` | `/api/watchlist/lists` | Private | Creates a named watchlist (maximum 20 per user). |
+| `PATCH` | `/api/watchlist/lists/:id` | Private | Renames an owned watchlist. |
+| `DELETE` | `/api/watchlist/lists/:id` | Private | Deletes an owned watchlist. |
+| `PUT` | `/api/watchlist/lists/:id/reorder` | Private | Reorders every item using its ID exactly once. |
+| `DELETE`| `/api/watchlist/:id?listId=...` | Private | Removes an item from an owned list. |
 
 ### Alerts (`/api/alerts`)
 | Method | Endpoint | Access | Description |
@@ -170,6 +219,7 @@ Expected JSON response:
 |---|---|---|---|
 | `GET` | `/api/comments/:ideaId` | Public | Returns discussion comments for a specific idea setup. |
 | `POST` | `/api/comments` | Private | Posts a new comment or reply for an idea setup. |
+| `PATCH` | `/api/comments/:id` | Private | Edits an owned comment and records its edit time. |
 | `DELETE`| `/api/comments/:id` | Private | Deletes a comment (ownership verified). |
 
 ### Market Proxy (`/api/market`)
@@ -211,57 +261,19 @@ Moving-average ideas require at least 22 completed candles; breakout ideas requi
 
 ## 6. Database Collections Schema Specification
 
-### Collection: `users`
-```json
-{
-  "_id": "ObjectId",
-  "name": "String (e.g. Test User)",
-  "username": "String (e.g. testuser)",
-  "email": "String (unique, lowercase)",
-  "password": "String (bcrypt hashed)",
-  "avatar": "String (default: user)",
-  "createdAt": "ISODate"
-}
-```
+### Collections and features
 
-### Collection: `watchlist`
-```json
-{
-  "_id": "ObjectId",
-  "userId": "Mixed (ObjectId or String)",
-  "name": "String (e.g. My Watchlist)",
-  "symbols": ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN", "BTCUSDT"],
-  "updatedAt": "ISODate"
-}
-```
+| Collection | Purpose and application use |
+|---|---|
+| `users` | Accounts, unique email and case-insensitive username indexes, bcrypt `passwordHash`, display name, avatar, embedded preferences and token version for logout invalidation. |
+| `watchlists` | One document per named list, owned by a user; ordered embedded symbols carry asset type, exchange, provider and display name. Unique owner/name index prevents duplicate names. |
+| `watchlist` | Legacy collection retained for compatibility. On the first authenticated watchlist read, old symbols are imported into the user's default `watchlists` document. |
+| `alerts` | User-owned price conditions, activation and trigger state. The monitor currently evaluates Binance crypto pairs; stock conditions are stored but are not monitored. |
+| `notifications` | User-owned alert-trigger notifications, deduplicated by alert and trigger count; read state is updated through notification endpoints. |
+| `comments` | Public idea discussions with author IDs, parent references, edit time and per-resource/per-author indexes. Create, edit and delete require authentication; edits and deletes require ownership. |
+| `paper_portfolios` | One CAS-versioned document per user containing initial balance, cash, long crypto holdings, limit-order lifecycle, execution history and idempotency records. |
 
-### Collection: `alerts`
-```json
-{
-  "_id": "ObjectId",
-  "userId": "Mixed (ObjectId or String)",
-  "symbol": "String (e.g. AAPL)",
-  "triggerCondition": "String (greater_than, less_than, above, below)",
-  "targetValue": 250,
-  "isActive": true,
-  "isTriggered": false,
-  "notificationType": ["email", "in-app"],
-  "createdAt": "ISODate"
-}
-```
-
-### Collection: `comments`
-```json
-{
-  "_id": "ObjectId",
-  "ideaId": "Mixed (ObjectId or String slug)",
-  "userId": "Mixed (ObjectId or String)",
-  "userName": "String",
-  "content": "String",
-  "parentCommentId": "Mixed (ObjectId or null)",
-  "createdAt": "ISODate"
-}
-```
+`userpreferences` is not a separate collection because the current profile settings are a small embedded object on `users`. `newsarticles` and `pricehistory` are not persisted: news is cached in memory and historical candle data comes from Binance. No `refreshTokens` collection is needed because logout increments a token version on the user; no audit-log collection is currently required by an administrative feature.
 
 ## React frontend and paper trading
 
@@ -275,4 +287,8 @@ npm run dev
 
 Vite proxies `/api` to the Express server at `http://localhost:5000`; set `VITE_BACKEND_ORIGIN` if the backend uses another origin. Run `npm run build` in `frontend/` to create a production build.
 
-Paper trading is authenticated and simulated only. Each account starts with 100,000 USDT. The portfolio, performance, market-order, and reset endpoints use server-fetched Binance prices and the signed-in account. Order requests require an `Idempotency-Key` UUID. No real exchange orders are placed.
+Paper trading is authenticated and simulated only. New accounts start with `PAPER_INITIAL_BALANCE` USDT (default 100,000; maximum 10,000,000). The portfolio, performance, market-order, limit-order, cancellation, and reset endpoints are scoped to the signed-in account. Order requests require an `Idempotency-Key` UUID. No real exchange orders are placed.
+
+The simulator currently supports Binance USDT spot pairs only, long positions only, zero simulated commissions, and no margin. Market orders use a fresh server-side Binance last-trade quote at request time. Limit orders persist as pending and are evaluated against Binance last price whenever the authenticated portfolio is refreshed (the UI refreshes periodically); eligible buys require last price at or below the limit and eligible sells at or above it. A crossed limit fills at its limit price, conservatively, without claiming order-book price improvement. Pending buys reserve cash and pending sells reserve quantity. Pending limit orders can be cancelled; modification, stop/stop-limit, take-profit/stop-loss, partial fills, and short positions are not implemented. This is a smaller feature set than TradingView Paper Trading, which documents market, limit, stop and TP/SL workflows across asset classes. Existing portfolios without an `initialBalance` field use the historical 100,000 USDT baseline and acquire the field on reset; no destructive migration is needed.
+
+Accounting uses fixed 8-decimal integer-scaled arithmetic in the trading service. Buys reduce cash by fill notional; sells add fill notional. Positions use weighted-average entry price. A sell realizes `(sell fill - average entry) * sold quantity`; unrealized P/L is `(mark - average entry) * open quantity`; equity is cash plus marked long-position value; total P/L is equity minus that account's initial balance. No fees are charged or subtracted. Available cash subtracts pending buy-limit reservations, and sellable quantity subtracts pending sell-limit reservations. Each account's balance, positions, orders, trades, and replay keys live in one versioned MongoDB document; compare-and-set updates serialize concurrent writes without a multi-document transaction. The order monitor runs every `PAPER_ORDER_CHECK_INTERVAL_MS` (default 15 seconds) and portfolio reads also evaluate pending limits. Because the feed is sampled, a brief crossing between checks can be missed.

@@ -49,7 +49,7 @@ export function SignUp() {
       {error && <div className="form-error" role="alert">{error}</div>}
       <label>Name or username<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={3} maxLength={30} placeholder="Your name" /></label>
       <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required maxLength={254} placeholder="you@example.com" /></label>
-      <label>Password<span className="password-field"><input type={visible ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required minLength={6} placeholder="At least 6 characters" /><button type="button" className="password-toggle" onClick={() => setVisible(!visible)} aria-label={visible ? 'Hide password' : 'Show password'}>{visible ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+      <label>Password<span className="password-field"><input type={visible ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required minLength={8} maxLength={72} placeholder="8–72 characters" /><button type="button" className="password-toggle" onClick={() => setVisible(!visible)} aria-label={visible ? 'Hide password' : 'Show password'}>{visible ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
       <button className="button button-primary auth-submit auth-signin-submit" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
     </form>
   </AuthSplitLayout>;

@@ -24,14 +24,17 @@ const commentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null
   },
-  createdAt: {
+  editedAt: {
     type: Date,
-    default: Date.now
+    default: null
   }
 }, {
-  timestamps: false,
+  timestamps: true,
   collection: 'comments'
 });
+
+commentSchema.index({ ideaId: 1, createdAt: 1 }, { name: 'comments_by_resource' });
+commentSchema.index({ userId: 1, createdAt: -1 }, { name: 'comments_by_author' });
 
 const Comment = mongoose.model('Comment', commentSchema);
 export default Comment;

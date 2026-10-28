@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
+import { runAlertMonitorOnce } from '../services/alertMonitor.js';
 
 const backendDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 dotenv.config({ path: resolve(backendDirectory, '.env') });
@@ -165,15 +166,67 @@ try {
   assert.equal((await request('/auth/login', { body: { email: primary.account.email, password: 'wrong-password' } })).status, 401);
   assert.equal((await request('/users/me', { token })).status, 200);
 
+  const firstAlertKey = randomUUID();
+  const firstAlertPayload = { symbol: 'BTCUSDT', assetType: 'crypto', condition: 'greater_than', targetValue: 82_000 };
+  const firstAlert = await request('/alerts', { token, body: firstAlertPayload, idempotencyKey: firstAlertKey });
+  const firstAlertRetry = await request('/alerts', { token, body: firstAlertPayload, idempotencyKey: firstAlertKey });
+  const secondAlert = await request('/alerts', { token, body: { symbol: 'BTCUSDT', assetType: 'crypto', condition: 'less_than', targetValue: 79_000 } });
+  const thirdAlert = await request('/alerts', { token, body: { symbol: 'ETHUSDT', assetType: 'crypto', condition: 'greater_than', targetValue: 2_500 } });
+  assert.equal(firstAlert.status, 201);
+  assert.equal(firstAlertRetry.status, 200);
+  assert.equal(firstAlertRetry.data.data._id, firstAlert.data.data._id, 'retry with the same key must return the original alert');
+  assert.equal((await request('/alerts', { token, body: { ...firstAlertPayload, targetValue: 83_000 }, idempotencyKey: firstAlertKey })).status, 409);
+  assert.equal(secondAlert.status, 201);
+  assert.equal(thirdAlert.status, 201);
+  assert.notEqual(firstAlert.data.data._id, secondAlert.data.data._id);
+  assert.equal((await request('/alerts', { token, body: { symbol: 'BTCUSDT', assetType: 'crypto', condition: 'greater_than', targetValue: '' } })).status, 400);
+  assert.equal((await request(`/alerts/${firstAlert.data.data._id}`, { token: second.token, method: 'DELETE' })).status, 404);
+  const savedAlerts = await request('/alerts', { token });
+  assert.equal(savedAlerts.status, 200);
+  assert.equal(savedAlerts.data.data.length, 3, 'multiple independent alerts must coexist for one account');
+  const alertPrices = new Map([['BTCUSDT', 82_001], ['ETHUSDT', 2_501]]);
+  const testUserAlertFilter = { userId: primary.userId };
+  const triggerPass = await runAlertMonitorOnce(async () => alertPrices, testUserAlertFilter);
+  assert.equal(triggerPass.triggered, 2, 'each matching alert should trigger independently');
+  const repeatPass = await runAlertMonitorOnce(async () => alertPrices, testUserAlertFilter);
+  assert.equal(repeatPass.triggered, 0, 'a triggered alert must not notify again on later price polls');
+  for (const alert of [firstAlert.data.data, thirdAlert.data.data]) {
+    assert.equal(await mongoose.connection.collection('notifications').countDocuments({ alertId: new mongoose.Types.ObjectId(alert._id) }), 1);
+  }
+  const pausedAlert = await request(`/alerts/${secondAlert.data.data._id}`, { token, method: 'PUT', body: { isActive: false } });
+  assert.equal(pausedAlert.status, 200);
+  assert.equal(pausedAlert.data.data.isActive, false);
+  assert.equal((await request(`/alerts/${thirdAlert.data.data._id}`, { token, method: 'DELETE' })).status, 200);
+  assert.equal((await request('/alerts', { token })).data.data.length, 2, 'pausing or deleting one alert must leave the other alerts intact');
+
   assert.equal((await request('/paper-trading')).status, 401, 'Unauthenticated portfolio requests must be rejected.');
   const starting = await request('/paper-trading', { token });
   assert.equal(starting.status, 200);
-  assert.equal(starting.data.data.initialBalance, 100_000);
-  assert.equal(starting.data.data.cash, 100_000);
+  const expectedInitialBalance = Number(process.env.PAPER_INITIAL_BALANCE || 100_000);
+  assert.equal(starting.data.data.initialBalance, expectedInitialBalance);
+  assert.equal(starting.data.data.cash, expectedInitialBalance);
   assert.equal(starting.data.data.trades.length, 0);
   const secondStarting = await request('/paper-trading', { token: second.token });
-  assert.equal(secondStarting.data.data.cash, 100_000);
+  assert.equal(secondStarting.data.data.cash, expectedInitialBalance);
   assert.equal(secondStarting.data.data.trades.length, 0);
+
+  const limitKey = randomUUID();
+  const pendingLimit = await request('/paper-trading/orders', {
+    token,
+    body: { symbol: 'BTCUSDT', side: 'buy', orderType: 'limit', limitPrice: 1, amountUsdt: 20 },
+    idempotencyKey: limitKey
+  });
+  assert.equal(pendingLimit.status, 201);
+  assert.equal(pendingLimit.data.pending, true);
+  assert.equal(pendingLimit.data.order.status, 'pending');
+  assert.equal(pendingLimit.data.data.availableCash, expectedInitialBalance - 20);
+  assert.equal(pendingLimit.data.data.trades.length, 0, 'placing a limit order cannot create an immediate fill');
+  const foreignCancel = await request(`/paper-trading/orders/${limitKey}`, { token: second.token, method: 'DELETE' });
+  assert.equal(foreignCancel.status, 404, 'a different user cannot cancel this order');
+  const cancellation = await request(`/paper-trading/orders/${limitKey}`, { token, method: 'DELETE' });
+  assert.equal(cancellation.status, 200);
+  assert.equal(cancellation.data.data.orders[0].status, 'cancelled');
+  assert.equal(cancellation.data.data.availableCash, expectedInitialBalance);
 
   const malformed = await assertOrderError('/paper-trading/orders', {
     token, body: { symbol: 'BTCUSDT', side: 'buy', quantity: 0 }, status: 400, idempotencyKey: randomUUID()
@@ -209,6 +262,15 @@ try {
   });
   let primaryPortfolio = (await request('/paper-trading', { token })).data.data;
   assert.equal(primaryPortfolio.trades.length, 1, 'Replays and payload conflicts must not duplicate the trade.');
+
+  const persistedLimitKey = randomUUID();
+  const persistedLimit = await request('/paper-trading/orders', {
+    token,
+    body: { symbol: 'BTCUSDT', side: 'buy', orderType: 'limit', limitPrice: 1, amountUsdt: 5 },
+    idempotencyKey: persistedLimitKey
+  });
+  assert.equal(persistedLimit.status, 201);
+  assert.equal(persistedLimit.data.order.status, 'pending');
 
   const tooMuchToSell = Number((buy.data.trade.quantity + 0.00000001).toFixed(8));
   await assertOrderError('/paper-trading/orders', {
@@ -256,12 +318,17 @@ try {
   assert.equal(afterRestart.data.data.cash, beforeRestart.cash);
   assert.deepEqual(afterRestart.data.data.trades, beforeRestart.trades);
   assert.deepEqual(afterRestart.data.data.holdings, beforeRestart.holdings);
+  assert.deepEqual(afterRestart.data.data.orders, beforeRestart.orders, 'pending limit state must survive backend restart');
+  const alertsAfterRestart = await request('/alerts', { token });
+  assert.equal(alertsAfterRestart.status, 200);
+  assert.equal(alertsAfterRestart.data.data.length, 2, 'saved alerts must persist across backend restart');
+  assert.ok(alertsAfterRestart.data.data.some((alert) => alert._id === secondAlert.data.data._id && !alert.isActive));
   assert.equal((await request('/users/me', { token })).status, 200, 'The same isolated session should restore after backend restart.');
 
   const logout = await request('/auth/logout', { token, method: 'POST', body: {} });
   assert.equal(logout.status, 200);
   assert.equal((await request('/paper-trading', { token })).status, 401);
-  console.log('Integration checks passed: registration/hash/login/session, protected portfolio access, buy/partial sell/full close, invalid orders, idempotency conflicts/replay, concurrent spending, and persistence across backend restart.');
+  console.log('Integration checks passed: registration/hash/login/session, protected portfolio access, multiple independent alerts and alert ownership/pause/delete/validation/persistence, market buy/sell, limit pending/cancel/ownership, invalid orders, idempotency conflicts/replay, concurrent spending, and persistence across backend restart.');
 } finally {
   await stopTestBackend().catch(() => {});
   if (mongoose.connection.readyState === 1 && mongoose.connection.name === TEST_DATABASE) {
